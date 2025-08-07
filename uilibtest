@@ -3,20 +3,15 @@ local UserInputService = game:GetService("UserInputService")
 
 local UILibrary = {}
 
--- Helper to convert {r,g,b} table to Color3
-local function tableToColor3(t)
-    return Color3.fromRGB(t[1], t[2], t[3])
-end
-
--- Hardcoded colors for the UI (no theme manager)
 local config = {
-    mainBackground = Color3.fromRGB(0, 0, 0),           -- black background
-    titleBarBackground = Color3.fromRGB(35, 35, 35),
-    tabsBackground = Color3.fromRGB(30, 30, 30),
-    contentBackground = Color3.fromRGB(20, 20, 20),
+    mainBackground = Color3.fromRGB(30, 30, 30),
+    titleBarBackground = Color3.fromRGB(20, 20, 20),
+    tabsBackground = Color3.fromRGB(40, 40, 40),
+    contentBackground = Color3.fromRGB(35, 35, 35),
     buttonBackground = Color3.fromRGB(50, 50, 50),
-    buttonToggledOn = Color3.fromRGB(0, 80, 0),
-    buttonToggledOff = Color3.fromRGB(80, 0, 0),
+    buttonHover = Color3.fromRGB(70, 70, 70),
+    buttonToggledOn = Color3.fromRGB(0, 150, 0),
+    buttonToggledOff = Color3.fromRGB(150, 0, 0),
     dropdownBackground = Color3.fromRGB(40, 40, 40),
     dropdownListBackground = Color3.fromRGB(30, 30, 30),
     textColor = Color3.fromRGB(255, 255, 255),
@@ -25,12 +20,12 @@ local config = {
 function UILibrary:Window(title)
     local player = game.Players.LocalPlayer
     local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-    gui.Name = "CustomUI"
+    gui.Name = "TyroneUI"
     gui.ResetOnSpawn = false
 
     local main = Instance.new("Frame", gui)
-    main.Size = UDim2.new(0, 400, 0, 350)
-    main.Position = UDim2.new(0.5, -200, 0.5, -175)
+    main.Size = UDim2.new(0, 500, 0, 320)
+    main.Position = UDim2.new(0.5, -250, 0.5, -160)
     main.BackgroundColor3 = config.mainBackground
     main.BorderSizePixel = 0
     main.Active = true
@@ -42,11 +37,12 @@ function UILibrary:Window(title)
     local titleBar = Instance.new("Frame", main)
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = config.titleBarBackground
+    titleBar.BorderSizePixel = 0
     local titleBarCorner = Instance.new("UICorner", titleBar)
     titleBarCorner.CornerRadius = UDim.new(0, 12)
 
     local titleLabel = Instance.new("TextLabel", titleBar)
-    titleLabel.Size = UDim2.new(1, -30, 1, 0)
+    titleLabel.Size = UDim2.new(1, -40, 1, 0)
     titleLabel.Position = UDim2.new(0, 10, 0, 0)
     titleLabel.Text = title
     titleLabel.BackgroundTransparency = 1
@@ -57,194 +53,188 @@ function UILibrary:Window(title)
 
     local minimize = Instance.new("TextButton", titleBar)
     minimize.Size = UDim2.new(0, 30, 1, 0)
-    minimize.Position = UDim2.new(1, -30, 0, 0)
-    minimize.Text = "-"
+    minimize.Position = UDim2.new(1, -35, 0, 0)
+    minimize.Text = "–"
     minimize.Font = Enum.Font.SourceSansBold
-    minimize.TextSize = 20
+    minimize.TextSize = 22
     minimize.TextColor3 = config.textColor
-    minimize.BackgroundColor3 = main.BackgroundColor3
+    minimize.BackgroundColor3 = titleBar.BackgroundColor3
     minimize.BorderSizePixel = 0
     local minCorner = Instance.new("UICorner", minimize)
     minCorner.CornerRadius = UDim.new(0, 12)
 
     local tabsFrame = Instance.new("Frame", main)
+    tabsFrame.Size = UDim2.new(0, 120, 1, -30)
     tabsFrame.Position = UDim2.new(0, 0, 0, 30)
-    tabsFrame.Size = UDim2.new(1, 0, 0, 30)
     tabsFrame.BackgroundColor3 = config.tabsBackground
+    tabsFrame.BorderSizePixel = 0
     local tabsCorner = Instance.new("UICorner", tabsFrame)
-    tabsCorner.CornerRadius = UDim.new(0, 8)
+    tabsCorner.CornerRadius = UDim.new(0, 10)
 
-    local content = Instance.new("Frame", main)
-    content.Position = UDim2.new(0, 0, 0, 60)
-    content.Size = UDim2.new(1, 0, 1, -60)
-    content.BackgroundColor3 = config.contentBackground
-    local contentCorner = Instance.new("UICorner", content)
-    contentCorner.CornerRadius = UDim.new(0, 8)
+    local tabListLayout = Instance.new("UIListLayout", tabsFrame)
+    tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    tabListLayout.Padding = UDim.new(0, 6)
 
-    -- Scroll frame inside content
-    local scrollingFrame = Instance.new("ScrollingFrame", content)
-    scrollingFrame.Size = UDim2.new(1, 0, 1, 0)
-    scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    scrollingFrame.ScrollBarThickness = 6
-    scrollingFrame.BackgroundTransparency = 1
-    scrollingFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-    scrollingFrame.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
-    local scrollLayout = Instance.new("UIListLayout", scrollingFrame)
-    scrollLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    scrollLayout.Padding = UDim.new(0, 6)
-
-    local minimized = false
-    minimize.MouseButton1Click:Connect(function()
-        minimized = not minimized
-        if minimized then
-            content.Visible = false
-            tabsFrame.Visible = false
-            main.Size = UDim2.new(0, 400, 0, 30)
-        else
-            content.Visible = true
-            tabsFrame.Visible = true
-            main.Size = UDim2.new(0, 400, 0, 350)
-        end
-    end)
+    local contentFrame = Instance.new("Frame", main)
+    contentFrame.Position = UDim2.new(0, 125, 0, 35)
+    contentFrame.Size = UDim2.new(1, -130, 1, -45)
+    contentFrame.BackgroundColor3 = config.contentBackground
+    contentFrame.BorderSizePixel = 0
+    local contentCorner = Instance.new("UICorner", contentFrame)
+    contentCorner.CornerRadius = UDim.new(0, 12)
 
     local tabs = {}
     local tabButtons = {}
     local tabFrames = {}
-    local currentTabFrame = nil
+    local currentTab = nil
 
-    local window = {}
-
-    local function createElement(obj, extraHeight)
-        extraHeight = extraHeight or 35
-        obj.LayoutOrder = #scrollLayout:GetChildren() -- automatically order
-        obj.Parent = scrollingFrame
-        return obj
+    local function hideAllTabs()
+        for _, frame in pairs(tabFrames) do
+            frame.Visible = false
+        end
+        for _, btn in pairs(tabButtons) do
+            btn.BackgroundColor3 = config.tabsBackground
+        end
     end
 
     local function selectTab(name)
-        if currentTabFrame then
-            TweenService:Create(currentTabFrame, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
-            currentTabFrame.Visible = false
-        end
-        local tabFrame = tabFrames[name]
-        if tabFrame then
-            currentTabFrame = tabFrame
-            currentTabFrame.Visible = true
-            TweenService:Create(currentTabFrame, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
-        end
-
-        for tabName, btn in pairs(tabButtons) do
-            btn.BackgroundColor3 = config.tabsBackground
-        end
-
-        if tabButtons[name] then
-            tabButtons[name].BackgroundColor3 = config.buttonToggledOn
-        end
+        if currentTab == name then return end
+        hideAllTabs()
+        currentTab = name
+        tabFrames[name].Visible = true
+        tabButtons[name].BackgroundColor3 = config.buttonToggledOn
     end
 
-    function window:Tab(name)
-        local tabBtn = Instance.new("TextButton", tabsFrame)
-        tabBtn.Size = UDim2.new(0, 80, 1, 0)
-        tabBtn.Position = UDim2.new(0, #tabs * 80, 0, 0)
-        tabBtn.Text = name
-        tabBtn.Font = Enum.Font.SourceSans
-        tabBtn.TextSize = 18
-        tabBtn.BackgroundColor3 = config.tabsBackground
-        tabBtn.TextColor3 = config.textColor
-        tabBtn.AutoButtonColor = false
-        local tabBtnCorner = Instance.new("UICorner", tabBtn)
-        tabBtnCorner.CornerRadius = UDim.new(0, 6)
+    function UILibrary:CreateTab(name)
+        assert(not tabs[name], "Tab already exists: " .. name)
 
-        local tabFrame = Instance.new("Frame", content)
-        tabFrame.Size = UDim2.new(1, 0, 1, 0)
-        tabFrame.BackgroundTransparency = 1
-        tabFrame.Visible = false
+        local btn = Instance.new("TextButton")
+        btn.Size = UDim2.new(1, -12, 0, 35)
+        btn.BackgroundColor3 = config.tabsBackground
+        btn.BorderSizePixel = 0
+        btn.TextColor3 = config.textColor
+        btn.Font = Enum.Font.SourceSansBold
+        btn.TextSize = 16
+        btn.Text = name
+        btn.Parent = tabsFrame
+        local btnCorner = Instance.new("UICorner", btn)
+        btnCorner.CornerRadius = UDim.new(0, 8)
 
-        -- Clear old children and setup scrolling frame for tab content
-        scrollingFrame:ClearAllChildren()
-        scrollLayout = Instance.new("UIListLayout", scrollingFrame)
-        scrollLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        scrollLayout.Padding = UDim.new(0, 6)
+        local frame = Instance.new("ScrollingFrame")
+        frame.Size = UDim2.new(1, 0, 1, 0)
+        frame.Position = UDim2.new(0, 0, 0, 0)
+        frame.BackgroundTransparency = 1
+        frame.Visible = false
+        frame.ScrollBarThickness = 6
+        frame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        frame.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+        frame.Parent = contentFrame
 
-        tabButtons[name] = tabBtn
-        tabFrames[name] = tabFrame
+        local layout = Instance.new("UIListLayout", frame)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Padding = UDim.new(0, 8)
 
-        tabBtn.MouseButton1Click:Connect(function()
+        btn.MouseButton1Click:Connect(function()
             selectTab(name)
         end)
 
-        table.insert(tabs, tabBtn)
+        tabs[name] = {button = btn, frame = frame}
+        tabButtons[name] = btn
+        tabFrames[name] = frame
 
-        -- Auto select first tab only once
-        if #tabs == 1 then
+        if not currentTab then
             selectTab(name)
+        end
+
+        local function createElement(obj)
+            obj.Parent = frame
+            return obj
         end
 
         local tabAPI = {}
 
-        function tabAPI:Label(text)
-            local lbl = Instance.new("TextLabel")
-            lbl.Size = UDim2.new(1, 0, 0, 25)
-            lbl.BackgroundTransparency = 1
-            lbl.TextColor3 = config.textColor
-            lbl.Font = Enum.Font.SourceSans
-            lbl.TextSize = 18
-            lbl.Text = text
-            return createElement(lbl)
+        function tabAPI:AddLabel(text)
+            local label = Instance.new("TextLabel")
+            label.Size = UDim2.new(1, -20, 0, 25)
+            label.BackgroundTransparency = 1
+            label.TextColor3 = config.textColor
+            label.Font = Enum.Font.SourceSans
+            label.TextSize = 18
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Text = text
+            return createElement(label)
         end
 
-        function tabAPI:Text(text)
-            return tabAPI:Label(text) -- alias
-        end
-
-        function tabAPI:Button(text, callback)
+        function tabAPI:AddButton(text, callback)
             local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1, 0, 0, 35)
+            btn.Size = UDim2.new(1, -20, 0, 35)
             btn.BackgroundColor3 = config.buttonBackground
-            btn.Text = text
+            btn.BorderSizePixel = 0
             btn.TextColor3 = config.textColor
-            btn.Font = Enum.Font.SourceSans
+            btn.Font = Enum.Font.SourceSansBold
             btn.TextSize = 18
-            btn.AutoButtonColor = false
-            local btnCorner = Instance.new("UICorner", btn)
-            btnCorner.CornerRadius = UDim.new(0, 6)
-            btn.MouseButton1Click:Connect(callback)
-            return createElement(btn)
-        end
+            btn.Text = text
+            local corner = Instance.new("UICorner", btn)
+            corner.CornerRadius = UDim.new(0, 8)
 
-        function tabAPI:Toggle(text, callback)
-            local toggled = false
-            local btn = Instance.new("TextButton")
-            btn.Size = UDim2.new(1, 0, 0, 35)
-            btn.BackgroundColor3 = config.buttonToggledOff
-            btn.Text = text
-            btn.TextColor3 = config.textColor
-            btn.Font = Enum.Font.SourceSans
-            btn.TextSize = 18
-            btn.AutoButtonColor = false
-            local btnCorner = Instance.new("UICorner", btn)
-            btnCorner.CornerRadius = UDim.new(0, 6)
+            btn.MouseEnter:Connect(function()
+                btn.BackgroundColor3 = config.buttonHover
+            end)
+            btn.MouseLeave:Connect(function()
+                btn.BackgroundColor3 = config.buttonBackground
+            end)
 
             btn.MouseButton1Click:Connect(function()
-                toggled = not toggled
-                btn.BackgroundColor3 = toggled and config.buttonToggledOn or config.buttonToggledOff
-                callback(toggled)
+                if callback then
+                    pcall(callback)
+                end
             end)
 
             return createElement(btn)
         end
 
-        function tabAPI:Dropdown(text, options, callback)
+        function tabAPI:AddToggle(text, callback)
+            local toggled = false
+            local btn = Instance.new("TextButton")
+            btn.Size = UDim2.new(1, -20, 0, 35)
+            btn.BackgroundColor3 = config.buttonToggledOff
+            btn.BorderSizePixel = 0
+            btn.TextColor3 = config.textColor
+            btn.Font = Enum.Font.SourceSansBold
+            btn.TextSize = 18
+            btn.Text = text
+            local corner = Instance.new("UICorner", btn)
+            corner.CornerRadius = UDim.new(0, 8)
+
+            btn.MouseButton1Click:Connect(function()
+                toggled = not toggled
+                btn.BackgroundColor3 = toggled and config.buttonToggledOn or config.buttonToggledOff
+                if callback then
+                    pcall(callback, toggled)
+                end
+            end)
+
+            btn.MouseEnter:Connect(function()
+                btn.BackgroundColor3 = toggled and config.buttonToggledOn:Lerp(config.buttonHover, 0.3) or config.buttonToggledOff:Lerp(config.buttonHover, 0.3)
+            end)
+            btn.MouseLeave:Connect(function()
+                btn.BackgroundColor3 = toggled and config.buttonToggledOn or config.buttonToggledOff
+            end)
+
+            return createElement(btn)
+        end
+
+        function tabAPI:AddDropdown(text, options, callback)
             local current = options[1]
             local expanded = false
 
             local container = Instance.new("Frame")
-            container.Size = UDim2.new(1, 0, 0, 40)
+            container.Size = UDim2.new(1, -20, 0, 40)
             container.BackgroundColor3 = config.dropdownBackground
             container.BorderSizePixel = 0
-            container.ClipsDescendants = false
+            container.ClipsDescendants = true
             local containerCorner = Instance.new("UICorner", container)
-            containerCorner.CornerRadius = UDim.new(0, 6)
+            containerCorner.CornerRadius = UDim.new(0, 8)
 
             local label = Instance.new("TextLabel")
             label.Size = UDim2.new(1, -40, 1, 0)
@@ -267,7 +257,7 @@ function UILibrary:Window(title)
             arrow.TextSize = 20
             arrow.Parent = container
             local arrowCorner = Instance.new("UICorner", arrow)
-            arrowCorner.CornerRadius = UDim.new(0, 6)
+            arrowCorner.CornerRadius = UDim.new(0, 8)
 
             local dropdownList = Instance.new("Frame")
             dropdownList.Size = UDim2.new(1, 0, 0, 0)
@@ -277,7 +267,7 @@ function UILibrary:Window(title)
             dropdownList.ClipsDescendants = true
             dropdownList.Parent = container
             local listCorner = Instance.new("UICorner", dropdownList)
-            listCorner.CornerRadius = UDim.new(0, 6)
+            listCorner.CornerRadius = UDim.new(0, 8)
 
             local layout = Instance.new("UIListLayout")
             layout.Parent = dropdownList
@@ -287,10 +277,10 @@ function UILibrary:Window(title)
                 expanded = not expanded
                 if expanded then
                     local totalHeight = #options * 35
-                    dropdownList:TweenSize(UDim2.new(1, 0, 0, totalHeight), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+                    dropdownList:TweenSize(UDim2.new(1, 0, 0, totalHeight), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
                     arrow.Text = "▲"
                 else
-                    dropdownList:TweenSize(UDim2.new(1, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+                    dropdownList:TweenSize(UDim2.new(1, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
                     arrow.Text = "▼"
                 end
             end
@@ -314,29 +304,27 @@ function UILibrary:Window(title)
                 optionBtn.LayoutOrder = i
                 optionBtn.Parent = dropdownList
                 local optionCorner = Instance.new("UICorner", optionBtn)
-                optionCorner.CornerRadius = UDim.new(0, 6)
+                optionCorner.CornerRadius = UDim.new(0, 8)
 
                 optionBtn.MouseButton1Click:Connect(function()
                     current = option
                     label.Text = text .. ": " .. current
                     toggleDropdown()
                     if callback then
-                        callback(current)
+                        pcall(callback, current)
                     end
                 end)
             end
 
-            return createElement(container, 40)
+            return createElement(container)
         end
 
-        function tabAPI:Slider(text, min, max, default, callback)
+        function tabAPI:AddSlider(text, min, max, default, callback)
             default = default or min
             local value = default
-            local sliderHeight = 30
-            local sliderWidth = 200
 
             local container = Instance.new("Frame")
-            container.Size = UDim2.new(1, 0, 0, sliderHeight)
+            container.Size = UDim2.new(1, -20, 0, 45)
             container.BackgroundTransparency = 1
 
             local label = Instance.new("TextLabel", container)
@@ -350,32 +338,35 @@ function UILibrary:Window(title)
             label.Text = text .. ": " .. value
 
             local bar = Instance.new("Frame", container)
-            bar.Size = UDim2.new(0, sliderWidth, 0, 8)
-            bar.Position = UDim2.new(0, 0, 0, 22)
+            bar.Size = UDim2.new(1, 0, 0, 10)
+            bar.Position = UDim2.new(0, 0, 0, 30)
             bar.BackgroundColor3 = config.buttonBackground
-            bar.AnchorPoint = Vector2.new(0, 0)
+            bar.BorderSizePixel = 0
             local barCorner = Instance.new("UICorner", bar)
-            barCorner.CornerRadius = UDim.new(0, 4)
+            barCorner.CornerRadius = UDim.new(0, 5)
 
             local knob = Instance.new("ImageButton", bar)
             knob.Size = UDim2.new(0, 24, 0, 24)
-            knob.Position = UDim2.new((value - min) / (max - min), -12, 0, -8)
+            knob.Position = UDim2.new((value - min) / (max - min), -12, 0, -7)
             knob.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
             knob.AutoButtonColor = false
-            knob.Image = "" -- no image
+            knob.Image = ""
             local knobCorner = Instance.new("UICorner", knob)
             knobCorner.CornerRadius = UDim.new(0, 12)
 
             local dragging = false
+
             local function updateValueFromPos(x)
-                local relativeX = math.clamp(x - bar.AbsolutePosition.X, 0, sliderWidth)
-                local percent = relativeX / sliderWidth
-                local newValue = math.floor(min + (max - min) * percent + 0.5) -- round to nearest int
+                local relativeX = math.clamp(x - bar.AbsolutePosition.X, 0, bar.AbsoluteSize.X)
+                local percent = relativeX / bar.AbsoluteSize.X
+                local newValue = math.floor(min + (max - min) * percent + 0.5)
                 if newValue ~= value then
                     value = newValue
-                    knob.Position = UDim2.new((value - min) / (max - min), -12, 0, -8)
+                    knob.Position = UDim2.new((value - min) / (max - min), -12, 0, -7)
                     label.Text = text .. ": " .. value
-                    if callback then callback(value) end
+                    if callback then
+                        pcall(callback, value)
+                    end
                 end
             end
 
@@ -397,93 +388,46 @@ function UILibrary:Window(title)
                 end
             end)
 
-            -- Also allow click on the bar to jump knob
             bar.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     updateValueFromPos(input.Position.X)
                 end
             end)
 
-            return createElement(container, sliderHeight + 10)
+            return createElement(container)
         end
 
         return tabAPI
     end
 
-    -- Add Settings and Credits tabs (hidden)
-    local function createSystemTab(name, buildContent)
-        local tabBtn = Instance.new("TextButton", tabsFrame)
-        tabBtn.Size = UDim2.new(0, 80, 1, 0)
-        tabBtn.Position = UDim2.new(0, #tabs * 80, 0, 0)
-        tabBtn.Text = name
-        tabBtn.Font = Enum.Font.SourceSansItalic
-        tabBtn.TextSize = 18
-        tabBtn.BackgroundColor3 = config.tabsBackground
-        tabBtn.TextColor3 = config.textColor
-        tabBtn.AutoButtonColor = false
-        tabBtn.Visible = false -- hide from user tabs
-        local tabBtnCorner = Instance.new("UICorner", tabBtn)
-        tabBtnCorner.CornerRadius = UDim.new(0, 6)
-
-        local tabFrame = Instance.new("Frame", content)
-        tabFrame.Size = UDim2.new(1, 0, 1, 0)
-        tabFrame.BackgroundTransparency = 1
-        tabFrame.Visible = false
-
-        local scrollFrame = Instance.new("ScrollingFrame", tabFrame)
-        scrollFrame.Size = UDim2.new(1, 0, 1, 0)
-        scrollFrame.BackgroundTransparency = 1
-        scrollFrame.ScrollBarThickness = 6
-        scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-        scrollFrame.VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
-        local listLayout = Instance.new("UIListLayout", scrollFrame)
-        listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        listLayout.Padding = UDim.new(0, 6)
-
-        buildContent(scrollFrame)
-
-        return {btn = tabBtn, frame = tabFrame}
-    end
-
-    local settingsTab = createSystemTab("Settings", function(parent)
-        local title = Instance.new("TextLabel")
-        title.Size = UDim2.new(1, 0, 0, 30)
-        title.BackgroundTransparency = 1
-        title.TextColor3 = config.textColor
-        title.Font = Enum.Font.SourceSansBold
-        title.TextSize = 24
-        title.Text = "Settings"
-        title.Parent = parent
+    -- Minimize logic
+    local minimized = false
+    minimize.MouseButton1Click:Connect(function()
+        minimized = not minimized
+        if minimized then
+            TweenService:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 500, 0, 30)}):Play()
+            tabsFrame.Visible = false
+            contentFrame.Visible = false
+        else
+            TweenService:Create(main, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {Size = UDim2.new(0, 500, 0, 320)}):Play()
+            tabsFrame.Visible = true
+            contentFrame.Visible = true
+        end
     end)
 
-    local creditsTab = createSystemTab("Credits", function(parent)
-        local creditLabel = Instance.new("TextLabel")
-        creditLabel.Size = UDim2.new(1, 0, 0, 30)
-        creditLabel.BackgroundTransparency = 1
-        creditLabel.TextColor3 = config.textColor
-        creditLabel.Font = Enum.Font.SourceSansBold
-        creditLabel.TextSize = 20
-        creditLabel.Text = "UI made by Tyrone_darealest"
-        creditLabel.Parent = parent
-    end)
-
-    function window:ShowSettings()
-        if currentTabFrame then
-            currentTabFrame.Visible = false
+    function UILibrary:AddCreditsTab(textLines)
+        local creditsTab = self:CreateTab("Credits")
+        creditsTab:AddLabel("UI made by Tyrone_darealest")
+        if type(textLines) == "table" then
+            for _, line in ipairs(textLines) do
+                creditsTab:AddLabel(line)
+            end
+        elseif type(textLines) == "string" then
+            creditsTab:AddLabel(textLines)
         end
-        currentTabFrame = settingsTab.frame
-        currentTabFrame.Visible = true
     end
 
-    function window:ShowCredits()
-        if currentTabFrame then
-            currentTabFrame.Visible = false
-        end
-        currentTabFrame = creditsTab.frame
-        currentTabFrame.Visible = true
-    end
-
-    return window
+    return UILibrary
 end
 
 return UILibrary

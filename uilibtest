@@ -224,100 +224,101 @@ function UILibrary:Window(title)
             return createElement(btn)
         end
 
-        function tabAPI:AddDropdown(text, options, callback)
-            local current = options[1]
-            local expanded = false
+       function tabAPI:Dropdown(text, options, callback)
+    local current = options[1] or ""
+    local expanded = false
 
-            local container = Instance.new("Frame")
-            container.Size = UDim2.new(1, -20, 0, 40)
-            container.BackgroundColor3 = config.dropdownBackground
-            container.BorderSizePixel = 0
-            container.ClipsDescendants = true
-            local containerCorner = Instance.new("UICorner", container)
-            containerCorner.CornerRadius = UDim.new(0, 8)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, 0, 0, 40)
+    container.BackgroundColor3 = config.dropdownBackground
+    container.BorderSizePixel = 0
+    container.ClipsDescendants = true
+    local containerCorner = Instance.new("UICorner", container)
+    containerCorner.CornerRadius = UDim.new(0, 6)
 
-            local label = Instance.new("TextLabel")
-            label.Size = UDim2.new(1, -40, 1, 0)
-            label.Position = UDim2.new(0, 10, 0, 0)
-            label.BackgroundTransparency = 1
-            label.TextColor3 = config.textColor
-            label.Font = Enum.Font.SourceSans
-            label.TextSize = 18
-            label.TextXAlignment = Enum.TextXAlignment.Left
-            label.Text = text .. ": " .. current
-            label.Parent = container
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -40, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.TextColor3 = config.textColor
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 18
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Text = text .. ": " .. current
+    label.Parent = container
 
-            local arrow = Instance.new("TextButton")
-            arrow.Size = UDim2.new(0, 40, 1, 0)
-            arrow.Position = UDim2.new(1, -40, 0, 0)
-            arrow.BackgroundColor3 = config.dropdownBackground
-            arrow.TextColor3 = config.textColor
+    local arrow = Instance.new("TextButton")
+    arrow.Size = UDim2.new(0, 40, 1, 0)
+    arrow.Position = UDim2.new(1, -40, 0, 0)
+    arrow.BackgroundColor3 = config.dropdownBackground
+    arrow.TextColor3 = config.textColor
+    arrow.Text = "▼"
+    arrow.Font = Enum.Font.SourceSansBold
+    arrow.TextSize = 20
+    arrow.Parent = container
+    local arrowCorner = Instance.new("UICorner", arrow)
+    arrowCorner.CornerRadius = UDim.new(0, 6)
+
+    local dropdownList = Instance.new("Frame")
+    dropdownList.Size = UDim2.new(1, 0, 0, 0)
+    dropdownList.Position = UDim2.new(0, 0, 1, 0)
+    dropdownList.BackgroundColor3 = config.dropdownListBackground
+    dropdownList.BorderSizePixel = 0
+    dropdownList.ClipsDescendants = true
+    dropdownList.Parent = container
+    local listCorner = Instance.new("UICorner", dropdownList)
+    listCorner.CornerRadius = UDim.new(0, 6)
+
+    local layout = Instance.new("UIListLayout")
+    layout.Parent = dropdownList
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    local function toggleDropdown()
+        expanded = not expanded
+        if expanded then
+            local totalHeight = #options * 35
+            dropdownList:TweenSize(UDim2.new(1, 0, 0, totalHeight), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
+            arrow.Text = "▲"
+        else
+            dropdownList:TweenSize(UDim2.new(1, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
             arrow.Text = "▼"
-            arrow.Font = Enum.Font.SourceSansBold
-            arrow.TextSize = 20
-            arrow.Parent = container
-            local arrowCorner = Instance.new("UICorner", arrow)
-            arrowCorner.CornerRadius = UDim.new(0, 8)
-
-            local dropdownList = Instance.new("Frame")
-            dropdownList.Size = UDim2.new(1, 0, 0, 0)
-            dropdownList.Position = UDim2.new(0, 0, 1, 0)
-            dropdownList.BackgroundColor3 = config.dropdownListBackground
-            dropdownList.BorderSizePixel = 0
-            dropdownList.ClipsDescendants = true
-            dropdownList.Parent = container
-            local listCorner = Instance.new("UICorner", dropdownList)
-            listCorner.CornerRadius = UDim.new(0, 8)
-
-            local layout = Instance.new("UIListLayout")
-            layout.Parent = dropdownList
-            layout.SortOrder = Enum.SortOrder.LayoutOrder
-
-            local function toggleDropdown()
-                expanded = not expanded
-                if expanded then
-                    local totalHeight = #options * 35
-                    dropdownList:TweenSize(UDim2.new(1, 0, 0, totalHeight), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
-                    arrow.Text = "▲"
-                else
-                    dropdownList:TweenSize(UDim2.new(1, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.25, true)
-                    arrow.Text = "▼"
-                end
-            end
-
-            arrow.MouseButton1Click:Connect(toggleDropdown)
-            label.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                    toggleDropdown()
-                end
-            end)
-
-            for i, option in ipairs(options) do
-                local optionBtn = Instance.new("TextButton")
-                optionBtn.Size = UDim2.new(1, 0, 0, 35)
-                optionBtn.BackgroundColor3 = config.dropdownListBackground
-                optionBtn.TextColor3 = config.textColor
-                optionBtn.BorderSizePixel = 0
-                optionBtn.Text = option
-                optionBtn.Font = Enum.Font.SourceSans
-                optionBtn.TextSize = 18
-                optionBtn.LayoutOrder = i
-                optionBtn.Parent = dropdownList
-                local optionCorner = Instance.new("UICorner", optionBtn)
-                optionCorner.CornerRadius = UDim.new(0, 8)
-
-                optionBtn.MouseButton1Click:Connect(function()
-                    current = option
-                    label.Text = text .. ": " .. current
-                    toggleDropdown()
-                    if callback then
-                        pcall(callback, current)
-                    end
-                end)
-            end
-
-            return createElement(container)
         end
+    end
+
+    arrow.MouseButton1Click:Connect(toggleDropdown)
+    label.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            toggleDropdown()
+        end
+    end)
+
+    for i, option in ipairs(options) do
+        local optionBtn = Instance.new("TextButton")
+        optionBtn.Size = UDim2.new(1, 0, 0, 35)
+        optionBtn.BackgroundColor3 = config.dropdownListBackground
+        optionBtn.TextColor3 = config.textColor
+        optionBtn.BorderSizePixel = 0
+        optionBtn.Text = option
+        optionBtn.Font = Enum.Font.SourceSans
+        optionBtn.TextSize = 18
+        optionBtn.LayoutOrder = i
+        optionBtn.Parent = dropdownList
+        local optionCorner = Instance.new("UICorner", optionBtn)
+        optionCorner.CornerRadius = UDim.new(0, 6)
+
+        optionBtn.MouseButton1Click:Connect(function()
+            current = option
+            label.Text = text .. ": " .. current
+            toggleDropdown()
+            if callback then
+                callback(current)
+            end
+        end)
+    end
+
+    return createElement(container, 40)
+end
+
 
         function tabAPI:AddSlider(text, min, max, default, callback)
             default = default or min

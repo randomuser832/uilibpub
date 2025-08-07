@@ -15,6 +15,7 @@ local function safeCall(func, ...)
     end
 end
 
+-- Click ripple effect on buttons
 local function ClickEffect(guiObject)
     local circle = Instance.new("ImageLabel")
     circle.Name = "ClickEffect"
@@ -37,6 +38,7 @@ local function ClickEffect(guiObject)
     end)
 end
 
+-- Draggable frames helper
 local function Drag(gui)
     local dragging, dragInput, dragStart, startPos
 
@@ -177,95 +179,87 @@ function Library:Window(title)
                 local contentSize = currentTabContent.Layout.AbsoluteContentSize.Y
                 local targetHeight = 36 + contentSize + 8
                 bottomFrame:TweenSize(UDim2.new(0, 212, 0, targetHeight), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.25, true)
-            else
-                bottomFrame:TweenSize(UDim2.new(0, 212, 0, 36), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.25, true)
             end
             TweenService:Create(toggleImage, TweenInfo.new(0.25), {Rotation = 0}):Play()
             opened = true
         end
     end)
 
-    local windowAPI = {}
-
-    function windowAPI:Tab(name)
-        local tabButton = Instance.new("TextButton")
-        tabButton.Name = name .. "Button"
+    function Library:Tab(name)
+        local tabButton = Instance.new("TextButton", tabButtonsFrame)
+        tabButton.Name = name .. "TabButton"
         tabButton.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
         tabButton.BorderSizePixel = 0
-        tabButton.Size = UDim2.new(0, 72, 1, 0)
+        tabButton.Size = UDim2.new(0, 56, 0, 28)
         tabButton.Font = Enum.Font.GothamSemibold
         tabButton.Text = name
-        tabButton.TextColor3 = Color3.new(1, 1, 1)
+        tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
         tabButton.TextSize = 14
-        tabButton.Parent = tabButtonsFrame
-        tabButton.AutoButtonColor = false
 
-        local tabContent = Instance.new("Frame", bottomFrame)
-        tabContent.Name = name .. "Content"
+        local tabContent = Instance.new("ScrollingFrame", bottomFrame)
+        tabContent.Name = name .. "TabContent"
         tabContent.BackgroundTransparency = 1
         tabContent.BorderSizePixel = 0
         tabContent.Position = UDim2.new(0, 0, 0, 36)
-        tabContent.Size = UDim2.new(1, 0, 0, 0)
+        tabContent.Size = UDim2.new(0, 212, 0, 0)
+        tabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+        tabContent.ScrollBarThickness = 4
+        tabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
         tabContent.Visible = false
-        tabContent.ClipsDescendants = true
 
-        local contentLayout = Instance.new("UIListLayout", tabContent)
-        contentLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-        contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        contentLayout.Padding = UDim.new(0, 4)
-        tabContent.Layout = contentLayout
+        local layout = Instance.new("UIListLayout", tabContent)
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        layout.Padding = UDim.new(0, 6)
+        tabContent.Layout = layout
 
-        tabs[name] = tabContent
+        tabs[name] = {
+            Button = tabButton,
+            Content = tabContent
+        }
 
-        local function activateTab()
-            if currentTabContent then
-                currentTabContent.Visible = false
-                for _, btn in pairs(tabButtonsFrame:GetChildren()) do
-                    if btn:IsA("TextButton") then
-                        btn.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-                    end
-                end
+        -- Switch tab function
+        local function switchTab()
+            for _, tab in pairs(tabs) do
+                tab.Button.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+                tab.Content.Visible = false
+                tab.Content.Size = UDim2.new(0, 212, 0, 0)
             end
-            currentTabContent = tabContent
-            tabContent.Visible = true
             tabButton.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
+            tabContent.Visible = true
+            currentTabContent = tabContent
+
+            -- Tween to expand content size
+            local contentSize = layout.AbsoluteContentSize.Y
+            tabContent.Size = UDim2.new(0, 212, 0, contentSize)
 
             if opened then
-                local contentSize = tabContent.Layout.AbsoluteContentSize.Y
                 local targetHeight = 36 + contentSize + 8
                 bottomFrame:TweenSize(UDim2.new(0, 212, 0, targetHeight), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.25, true)
             end
         end
 
-        tabButton.MouseButton1Click:Connect(function()
-            safeCall(activateTab)
-        end)
+        tabButton.MouseButton1Click:Connect(switchTab)
 
-        if not currentTabContent then
-            activateTab()
+        -- Auto-select first tab
+        if #tabButtonsFrame:GetChildren() == 1 then
+            switchTab()
         end
 
+        -- API for elements inside tab
         local tabAPI = {}
 
+        -- Button element
         function tabAPI:Button(text, callback)
-            local buttonFrame = Instance.new("Frame")
-            buttonFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-            buttonFrame.Size = UDim2.new(0, 212, 0, 24)
-            buttonFrame.BorderSizePixel = 0
-            buttonFrame.LayoutOrder = #tabContent:GetChildren() + 1
-            buttonFrame.Parent = tabContent
-
             local button = Instance.new("TextButton")
-            button.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-            button.BorderSizePixel = 0
-            button.Position = UDim2.new(0, 0, 0, 0)
-            button.Size = UDim2.new(1, 0, 1, 0)
+            button.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
+            button.Size = UDim2.new(0, 212, 0, 28)
             button.Font = Enum.Font.GothamSemibold
             button.Text = text
-            button.TextColor3 = Color3.new(1, 1, 1)
+            button.TextColor3 = Color3.fromRGB(255, 255, 255)
             button.TextSize = 14
-            button.Parent = buttonFrame
-            button.AutoButtonColor = false
+            button.BorderSizePixel = 0
+            button.LayoutOrder = #tabContent:GetChildren() + 1
+            button.Parent = tabContent
 
             button.MouseButton1Click:Connect(function()
                 ClickEffect(button)
@@ -275,37 +269,19 @@ function Library:Window(title)
             return button
         end
 
+        -- Toggle element
         function tabAPI:Toggle(text, default, callback)
             local toggleFrame = Instance.new("Frame")
             toggleFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-            toggleFrame.Size = UDim2.new(0, 212, 0, 24)
+            toggleFrame.Size = UDim2.new(0, 212, 0, 28)
             toggleFrame.BorderSizePixel = 0
             toggleFrame.LayoutOrder = #tabContent:GetChildren() + 1
             toggleFrame.Parent = tabContent
 
-            local toggleButton = Instance.new("TextButton")
-            toggleButton.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-            toggleButton.BorderSizePixel = 0
-            toggleButton.Position = UDim2.new(0, 4, 0, 2)
-            toggleButton.Size = UDim2.new(0, 20, 0, 20)
-            toggleButton.Font = Enum.Font.SourceSans
-            toggleButton.Text = ""
-            toggleButton.Parent = toggleFrame
-            toggleButton.AutoButtonColor = false
-
-            local checkmark = Instance.new("ImageLabel")
-            checkmark.BackgroundTransparency = 1
-            checkmark.Image = "rbxassetid://3926305904"
-            checkmark.ImageRectOffset = Vector2.new(628, 316)
-            checkmark.ImageRectSize = Vector2.new(24, 24)
-            checkmark.Size = UDim2.new(1, 0, 1, 0)
-            checkmark.Visible = default
-            checkmark.Parent = toggleButton
-
             local label = Instance.new("TextLabel")
             label.BackgroundTransparency = 1
-            label.Position = UDim2.new(0, 28, 0, 0)
-            label.Size = UDim2.new(1, -28, 1, 0)
+            label.Position = UDim2.new(0, 4, 0, 0)
+            label.Size = UDim2.new(0, 176, 0, 28)
             label.Font = Enum.Font.GothamSemibold
             label.Text = text
             label.TextColor3 = Color3.new(1, 1, 1)
@@ -313,19 +289,54 @@ function Library:Window(title)
             label.TextXAlignment = Enum.TextXAlignment.Left
             label.Parent = toggleFrame
 
-            local toggled = default
-            Library.flags[text] = toggled
+            local toggleButton = Instance.new("Frame")
+            toggleButton.BackgroundColor3 = Color3.fromRGB(67, 67, 67)
+            toggleButton.Size = UDim2.new(0, 32, 0, 20)
+            toggleButton.Position = UDim2.new(1, -36, 0, 4)
+            toggleButton.BorderSizePixel = 0
+            toggleButton.Parent = toggleFrame
 
-            toggleButton.MouseButton1Click:Connect(function()
-                toggled = not toggled
+            -- Rounded corners
+            local toggleUICorner = Instance.new("UICorner", toggleButton)
+            toggleUICorner.CornerRadius = UDim.new(0, 10)
+
+            local toggleCircle = Instance.new("Frame")
+            toggleCircle.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
+            toggleCircle.Size = UDim2.new(0, 16, 0, 16)
+            toggleCircle.Position = UDim2.new(default and 1 or 0, default and -16 or 0, 0, 2)
+            toggleCircle.BorderSizePixel = 0
+            toggleCircle.Parent = toggleButton
+
+            local toggleCircleCorner = Instance.new("UICorner", toggleCircle)
+            toggleCircleCorner.CornerRadius = UDim.new(1, 0)
+
+            local toggled = default or false
+
+            local function setToggle(state)
+                toggled = state
                 Library.flags[text] = toggled
-                checkmark.Visible = toggled
+                if toggled then
+                    TweenService:Create(toggleCircle, TweenInfo.new(0.2), {Position = UDim2.new(1, -16, 0, 2)}):Play()
+                    TweenService:Create(toggleCircle, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(131, 132, 255)}):Play()
+                else
+                    TweenService:Create(toggleCircle, TweenInfo.new(0.2), {Position = UDim2.new(0, 0, 0, 2)}):Play()
+                    TweenService:Create(toggleCircle, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(67, 67, 67)}):Play()
+                end
                 safeCall(callback, toggled)
+            end
+
+            toggleButton.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    setToggle(not toggled)
+                end
             end)
 
-            return toggleButton
+            Library.flags[text] = toggled
+
+            return toggleFrame
         end
 
+        -- Slider element
         function tabAPI:Slider(text, min, max, default, callback)
             local sliderFrame = Instance.new("Frame")
             sliderFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
@@ -363,11 +374,19 @@ function Library:Window(title)
             sliderBar.BorderSizePixel = 0
             sliderBar.Parent = sliderFrame
 
+            local sliderBarUICorner = Instance.new("UICorner")
+            sliderBarUICorner.CornerRadius = UDim.new(0, 4)
+            sliderBarUICorner.Parent = sliderBar
+
             local fillBar = Instance.new("Frame")
             fillBar.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
             fillBar.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
             fillBar.BorderSizePixel = 0
             fillBar.Parent = sliderBar
+
+            local fillBarUICorner = Instance.new("UICorner")
+            fillBarUICorner.CornerRadius = UDim.new(0, 4)
+            fillBarUICorner.Parent = fillBar
 
             local dragging = false
 
@@ -405,10 +424,11 @@ function Library:Window(title)
             return sliderFrame
         end
 
-        function tabAPI:Dropdown(text, items, defaultIndex, callback)
+        -- Dropdown element
+        function tabAPI:Dropdown(text, options, default, callback)
             local dropdownFrame = Instance.new("Frame")
             dropdownFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-            dropdownFrame.Size = UDim2.new(0, 212, 0, 24)
+            dropdownFrame.Size = UDim2.new(0, 212, 0, 32)
             dropdownFrame.BorderSizePixel = 0
             dropdownFrame.LayoutOrder = #tabContent:GetChildren() + 1
             dropdownFrame.Parent = tabContent
@@ -416,7 +436,7 @@ function Library:Window(title)
             local label = Instance.new("TextLabel")
             label.BackgroundTransparency = 1
             label.Position = UDim2.new(0, 4, 0, 0)
-            label.Size = UDim2.new(0, 100, 0, 24)
+            label.Size = UDim2.new(0, 100, 0, 14)
             label.Font = Enum.Font.GothamSemibold
             label.Text = text
             label.TextColor3 = Color3.new(1, 1, 1)
@@ -424,97 +444,86 @@ function Library:Window(title)
             label.TextXAlignment = Enum.TextXAlignment.Left
             label.Parent = dropdownFrame
 
-            local selectedIndex = defaultIndex or 1
-            Library.flags[text] = items[selectedIndex]
-
             local dropdownButton = Instance.new("TextButton")
-            dropdownButton.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-            dropdownButton.BorderSizePixel = 0
-            dropdownButton.Position = UDim2.new(1, -100, 0, 0)
-            dropdownButton.Size = UDim2.new(0, 96, 0, 24)
+            dropdownButton.BackgroundColor3 = Color3.fromRGB(67, 67, 67)
+            dropdownButton.Position = UDim2.new(0, 4, 0, 18)
+            dropdownButton.Size = UDim2.new(1, -8, 0, 14)
             dropdownButton.Font = Enum.Font.GothamSemibold
-            dropdownButton.Text = items[selectedIndex]
+            dropdownButton.Text = tostring(default or "Select...")
             dropdownButton.TextColor3 = Color3.new(1, 1, 1)
             dropdownButton.TextSize = 14
+            dropdownButton.BorderSizePixel = 0
             dropdownButton.Parent = dropdownFrame
-            dropdownButton.AutoButtonColor = false
 
-            local listOpen = false
-            local listFrame = Instance.new("Frame")
-            listFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-            listFrame.BorderSizePixel = 0
-            listFrame.Position = UDim2.new(0, 0, 1, 4)
-            listFrame.Size = UDim2.new(1, 0, 0, 0)
-            listFrame.ClipsDescendants = true
-            listFrame.Parent = dropdownFrame
+            local dropdownUICorner = Instance.new("UICorner", dropdownButton)
+            dropdownUICorner.CornerRadius = UDim.new(0, 4)
 
-            local listLayout = Instance.new("UIListLayout", listFrame)
-            listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-            listLayout.Padding = UDim.new(0, 2)
+            local optionsFrame = Instance.new("ScrollingFrame")
+            optionsFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+            optionsFrame.BorderSizePixel = 0
+            optionsFrame.Position = UDim2.new(0, 0, 1, 0)
+            optionsFrame.Size = UDim2.new(1, 0, 0, 0)
+            optionsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+            optionsFrame.ScrollBarThickness = 4
+            optionsFrame.Visible = false
+            optionsFrame.Parent = dropdownFrame
 
-            local function toggleList()
-                if listOpen then
-                    listFrame:TweenSize(UDim2.new(1, 0, 0, 0), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.25, true)
-                    listOpen = false
-                else
-                    local contentHeight = #items * 24 + (#items - 1) * 2
-                    listFrame:TweenSize(UDim2.new(1, 0, 0, contentHeight), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.25, true)
-                    listOpen = true
-                end
+            local optionsLayout = Instance.new("UIListLayout", optionsFrame)
+            optionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            optionsLayout.Padding = UDim.new(0, 2)
+
+            local selectedOption = default
+
+            local function closeDropdown()
+                optionsFrame.Visible = false
+                optionsFrame:TweenSize(UDim2.new(1, 0, 0, 0), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.2, true)
+            end
+
+            local function openDropdown()
+                optionsFrame.Visible = true
+                local totalHeight = #options * 20 + 4
+                optionsFrame:TweenSize(UDim2.new(1, 0, 0, totalHeight), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.2, true)
             end
 
             dropdownButton.MouseButton1Click:Connect(function()
-                safeCall(toggleList)
+                if optionsFrame.Visible then
+                    closeDropdown()
+                else
+                    openDropdown()
+                end
             end)
 
-            for i, item in ipairs(items) do
-                local itemButton = Instance.new("TextButton")
-                itemButton.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-                itemButton.BorderSizePixel = 0
-                itemButton.Size = UDim2.new(1, 0, 0, 24)
-                itemButton.Font = Enum.Font.GothamSemibold
-                itemButton.Text = item
-                itemButton.TextColor3 = Color3.new(1, 1, 1)
-                itemButton.TextSize = 14
-                itemButton.Parent = listFrame
-                itemButton.AutoButtonColor = false
+            for i, option in ipairs(options) do
+                local optionButton = Instance.new("TextButton")
+                optionButton.BackgroundColor3 = Color3.fromRGB(67, 67, 67)
+                optionButton.Size = UDim2.new(1, -4, 0, 20)
+                optionButton.Position = UDim2.new(0, 2, 0, 0)
+                optionButton.Font = Enum.Font.GothamSemibold
+                optionButton.Text = option
+                optionButton.TextColor3 = Color3.new(1, 1, 1)
+                optionButton.TextSize = 14
+                optionButton.BorderSizePixel = 0
+                optionButton.LayoutOrder = i
+                optionButton.Parent = optionsFrame
 
-                itemButton.MouseButton1Click:Connect(function()
-                    selectedIndex = i
-                    dropdownButton.Text = items[selectedIndex]
-                    Library.flags[text] = items[selectedIndex]
-                    safeCall(callback, items[selectedIndex])
-                    toggleList()
+                optionButton.MouseButton1Click:Connect(function()
+                    selectedOption = option
+                    dropdownButton.Text = option
+                    Library.flags[text] = option
+                    safeCall(callback, option)
+                    closeDropdown()
                 end)
             end
 
+            Library.flags[text] = default
+
             return dropdownFrame
-        end
-
-        function tabAPI:Label(text)
-            local labelFrame = Instance.new("Frame")
-            labelFrame.BackgroundTransparency = 1
-            labelFrame.Size = UDim2.new(0, 212, 0, 18)
-            labelFrame.LayoutOrder = #tabContent:GetChildren() + 1
-            labelFrame.Parent = tabContent
-
-            local label = Instance.new("TextLabel")
-            label.BackgroundTransparency = 1
-            label.Size = UDim2.new(1, 0, 1, 0)
-            label.Font = Enum.Font.GothamSemibold
-            label.Text = text
-            label.TextColor3 = Color3.new(1, 1, 1)
-            label.TextSize = 14
-            label.TextXAlignment = Enum.TextXAlignment.Left
-            label.Parent = labelFrame
-
-            return label
         end
 
         return tabAPI
     end
 
-    return windowAPI
+    return self
 end
 
 return Library

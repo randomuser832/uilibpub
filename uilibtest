@@ -8,21 +8,19 @@ local function tableToColor3(t)
     return Color3.fromRGB(t[1], t[2], t[3])
 end
 
--- Default theme colors
-local defaultTheme = {
-    mainBackground = {25, 25, 25},
-    titleBarBackground = {35, 35, 35},
-    tabsBackground = {30, 30, 30},
-    contentBackground = {20, 20, 20},
-    buttonBackground = {50, 50, 50},
-    buttonToggledOn = {0, 80, 0},
-    buttonToggledOff = {80, 0, 0},
-    dropdownBackground = {40, 40, 40},
-    dropdownListBackground = {30, 30, 30},
-    textColor = {255, 255, 255},
+-- Hardcoded colors for the UI (no theme manager)
+local config = {
+    mainBackground = Color3.fromRGB(0, 0, 0),           -- black background
+    titleBarBackground = Color3.fromRGB(35, 35, 35),
+    tabsBackground = Color3.fromRGB(30, 30, 30),
+    contentBackground = Color3.fromRGB(20, 20, 20),
+    buttonBackground = Color3.fromRGB(50, 50, 50),
+    buttonToggledOn = Color3.fromRGB(0, 80, 0),
+    buttonToggledOff = Color3.fromRGB(80, 0, 0),
+    dropdownBackground = Color3.fromRGB(40, 40, 40),
+    dropdownListBackground = Color3.fromRGB(30, 30, 30),
+    textColor = Color3.fromRGB(255, 255, 255),
 }
-
-local config = defaultTheme
 
 function UILibrary:Window(title)
     local player = game.Players.LocalPlayer
@@ -33,7 +31,7 @@ function UILibrary:Window(title)
     local main = Instance.new("Frame", gui)
     main.Size = UDim2.new(0, 400, 0, 350)
     main.Position = UDim2.new(0.5, -200, 0.5, -175)
-    main.BackgroundColor3 = tableToColor3(config.mainBackground)
+    main.BackgroundColor3 = config.mainBackground
     main.BorderSizePixel = 0
     main.Active = true
     main.Draggable = true
@@ -43,16 +41,16 @@ function UILibrary:Window(title)
 
     local titleBar = Instance.new("Frame", main)
     titleBar.Size = UDim2.new(1, 0, 0, 30)
-    titleBar.BackgroundColor3 = tableToColor3(config.titleBarBackground)
+    titleBar.BackgroundColor3 = config.titleBarBackground
     local titleBarCorner = Instance.new("UICorner", titleBar)
     titleBarCorner.CornerRadius = UDim.new(0, 12)
-    
+
     local titleLabel = Instance.new("TextLabel", titleBar)
     titleLabel.Size = UDim2.new(1, -30, 1, 0)
     titleLabel.Position = UDim2.new(0, 10, 0, 0)
     titleLabel.Text = title
     titleLabel.BackgroundTransparency = 1
-    titleLabel.TextColor3 = tableToColor3(config.textColor)
+    titleLabel.TextColor3 = config.textColor
     titleLabel.Font = Enum.Font.SourceSansBold
     titleLabel.TextSize = 20
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
@@ -63,7 +61,7 @@ function UILibrary:Window(title)
     minimize.Text = "-"
     minimize.Font = Enum.Font.SourceSansBold
     minimize.TextSize = 20
-    minimize.TextColor3 = tableToColor3(config.textColor)
+    minimize.TextColor3 = config.textColor
     minimize.BackgroundColor3 = main.BackgroundColor3
     minimize.BorderSizePixel = 0
     local minCorner = Instance.new("UICorner", minimize)
@@ -72,14 +70,14 @@ function UILibrary:Window(title)
     local tabsFrame = Instance.new("Frame", main)
     tabsFrame.Position = UDim2.new(0, 0, 0, 30)
     tabsFrame.Size = UDim2.new(1, 0, 0, 30)
-    tabsFrame.BackgroundColor3 = tableToColor3(config.tabsBackground)
+    tabsFrame.BackgroundColor3 = config.tabsBackground
     local tabsCorner = Instance.new("UICorner", tabsFrame)
     tabsCorner.CornerRadius = UDim.new(0, 8)
 
     local content = Instance.new("Frame", main)
     content.Position = UDim2.new(0, 0, 0, 60)
     content.Size = UDim2.new(1, 0, 1, -60)
-    content.BackgroundColor3 = tableToColor3(config.contentBackground)
+    content.BackgroundColor3 = config.contentBackground
     local contentCorner = Instance.new("UICorner", content)
     contentCorner.CornerRadius = UDim.new(0, 8)
 
@@ -136,11 +134,11 @@ function UILibrary:Window(title)
         end
 
         for tabName, btn in pairs(tabButtons) do
-            btn.BackgroundColor3 = tableToColor3(config.tabsBackground)
+            btn.BackgroundColor3 = config.tabsBackground
         end
 
         if tabButtons[name] then
-            tabButtons[name].BackgroundColor3 = tableToColor3(config.buttonToggledOn)
+            tabButtons[name].BackgroundColor3 = config.buttonToggledOn
         end
     end
 
@@ -151,8 +149,8 @@ function UILibrary:Window(title)
         tabBtn.Text = name
         tabBtn.Font = Enum.Font.SourceSans
         tabBtn.TextSize = 18
-        tabBtn.BackgroundColor3 = tableToColor3(config.tabsBackground)
-        tabBtn.TextColor3 = tableToColor3(config.textColor)
+        tabBtn.BackgroundColor3 = config.tabsBackground
+        tabBtn.TextColor3 = config.textColor
         tabBtn.AutoButtonColor = false
         local tabBtnCorner = Instance.new("UICorner", tabBtn)
         tabBtnCorner.CornerRadius = UDim.new(0, 6)
@@ -188,7 +186,7 @@ function UILibrary:Window(title)
             local lbl = Instance.new("TextLabel")
             lbl.Size = UDim2.new(1, 0, 0, 25)
             lbl.BackgroundTransparency = 1
-            lbl.TextColor3 = tableToColor3(config.textColor)
+            lbl.TextColor3 = config.textColor
             lbl.Font = Enum.Font.SourceSans
             lbl.TextSize = 18
             lbl.Text = text
@@ -202,9 +200,9 @@ function UILibrary:Window(title)
         function tabAPI:Button(text, callback)
             local btn = Instance.new("TextButton")
             btn.Size = UDim2.new(1, 0, 0, 35)
-            btn.BackgroundColor3 = tableToColor3(config.buttonBackground)
+            btn.BackgroundColor3 = config.buttonBackground
             btn.Text = text
-            btn.TextColor3 = tableToColor3(config.textColor)
+            btn.TextColor3 = config.textColor
             btn.Font = Enum.Font.SourceSans
             btn.TextSize = 18
             btn.AutoButtonColor = false
@@ -218,9 +216,9 @@ function UILibrary:Window(title)
             local toggled = false
             local btn = Instance.new("TextButton")
             btn.Size = UDim2.new(1, 0, 0, 35)
-            btn.BackgroundColor3 = tableToColor3(config.buttonToggledOff)
+            btn.BackgroundColor3 = config.buttonToggledOff
             btn.Text = text
-            btn.TextColor3 = tableToColor3(config.textColor)
+            btn.TextColor3 = config.textColor
             btn.Font = Enum.Font.SourceSans
             btn.TextSize = 18
             btn.AutoButtonColor = false
@@ -229,7 +227,7 @@ function UILibrary:Window(title)
 
             btn.MouseButton1Click:Connect(function()
                 toggled = not toggled
-                btn.BackgroundColor3 = toggled and tableToColor3(config.buttonToggledOn) or tableToColor3(config.buttonToggledOff)
+                btn.BackgroundColor3 = toggled and config.buttonToggledOn or config.buttonToggledOff
                 callback(toggled)
             end)
 
@@ -242,7 +240,7 @@ function UILibrary:Window(title)
 
             local container = Instance.new("Frame")
             container.Size = UDim2.new(1, 0, 0, 40)
-            container.BackgroundColor3 = tableToColor3(config.dropdownBackground)
+            container.BackgroundColor3 = config.dropdownBackground
             container.BorderSizePixel = 0
             container.ClipsDescendants = false
             local containerCorner = Instance.new("UICorner", container)
@@ -252,7 +250,7 @@ function UILibrary:Window(title)
             label.Size = UDim2.new(1, -40, 1, 0)
             label.Position = UDim2.new(0, 10, 0, 0)
             label.BackgroundTransparency = 1
-            label.TextColor3 = tableToColor3(config.textColor)
+            label.TextColor3 = config.textColor
             label.Font = Enum.Font.SourceSans
             label.TextSize = 18
             label.TextXAlignment = Enum.TextXAlignment.Left
@@ -262,8 +260,8 @@ function UILibrary:Window(title)
             local arrow = Instance.new("TextButton")
             arrow.Size = UDim2.new(0, 40, 1, 0)
             arrow.Position = UDim2.new(1, -40, 0, 0)
-            arrow.BackgroundColor3 = tableToColor3(config.dropdownBackground)
-            arrow.TextColor3 = tableToColor3(config.textColor)
+            arrow.BackgroundColor3 = config.dropdownBackground
+            arrow.TextColor3 = config.textColor
             arrow.Text = "▼"
             arrow.Font = Enum.Font.SourceSansBold
             arrow.TextSize = 20
@@ -274,7 +272,7 @@ function UILibrary:Window(title)
             local dropdownList = Instance.new("Frame")
             dropdownList.Size = UDim2.new(1, 0, 0, 0)
             dropdownList.Position = UDim2.new(0, 0, 1, 0)
-            dropdownList.BackgroundColor3 = tableToColor3(config.dropdownListBackground)
+            dropdownList.BackgroundColor3 = config.dropdownListBackground
             dropdownList.BorderSizePixel = 0
             dropdownList.ClipsDescendants = true
             dropdownList.Parent = container
@@ -307,8 +305,8 @@ function UILibrary:Window(title)
             for i, option in ipairs(options) do
                 local optionBtn = Instance.new("TextButton")
                 optionBtn.Size = UDim2.new(1, 0, 0, 35)
-                optionBtn.BackgroundColor3 = tableToColor3(config.dropdownListBackground)
-                optionBtn.TextColor3 = tableToColor3(config.textColor)
+                optionBtn.BackgroundColor3 = config.dropdownListBackground
+                optionBtn.TextColor3 = config.textColor
                 optionBtn.BorderSizePixel = 0
                 optionBtn.Text = option
                 optionBtn.Font = Enum.Font.SourceSans
@@ -345,7 +343,7 @@ function UILibrary:Window(title)
             label.Size = UDim2.new(1, 0, 0, 20)
             label.Position = UDim2.new(0, 0, 0, 0)
             label.BackgroundTransparency = 1
-            label.TextColor3 = tableToColor3(config.textColor)
+            label.TextColor3 = config.textColor
             label.Font = Enum.Font.SourceSans
             label.TextSize = 18
             label.TextXAlignment = Enum.TextXAlignment.Left
@@ -354,7 +352,7 @@ function UILibrary:Window(title)
             local bar = Instance.new("Frame", container)
             bar.Size = UDim2.new(0, sliderWidth, 0, 8)
             bar.Position = UDim2.new(0, 0, 0, 22)
-            bar.BackgroundColor3 = tableToColor3(config.buttonBackground)
+            bar.BackgroundColor3 = config.buttonBackground
             bar.AnchorPoint = Vector2.new(0, 0)
             local barCorner = Instance.new("UICorner", bar)
             barCorner.CornerRadius = UDim.new(0, 4)
@@ -420,8 +418,8 @@ function UILibrary:Window(title)
         tabBtn.Text = name
         tabBtn.Font = Enum.Font.SourceSansItalic
         tabBtn.TextSize = 18
-        tabBtn.BackgroundColor3 = tableToColor3(config.tabsBackground)
-        tabBtn.TextColor3 = tableToColor3(config.textColor)
+        tabBtn.BackgroundColor3 = config.tabsBackground
+        tabBtn.TextColor3 = config.textColor
         tabBtn.AutoButtonColor = false
         tabBtn.Visible = false -- hide from user tabs
         local tabBtnCorner = Instance.new("UICorner", tabBtn)
@@ -451,7 +449,7 @@ function UILibrary:Window(title)
         local title = Instance.new("TextLabel")
         title.Size = UDim2.new(1, 0, 0, 30)
         title.BackgroundTransparency = 1
-        title.TextColor3 = tableToColor3(config.textColor)
+        title.TextColor3 = config.textColor
         title.Font = Enum.Font.SourceSansBold
         title.TextSize = 24
         title.Text = "Settings"
@@ -462,7 +460,7 @@ function UILibrary:Window(title)
         local creditLabel = Instance.new("TextLabel")
         creditLabel.Size = UDim2.new(1, 0, 0, 30)
         creditLabel.BackgroundTransparency = 1
-        creditLabel.TextColor3 = tableToColor3(config.textColor)
+        creditLabel.TextColor3 = config.textColor
         creditLabel.Font = Enum.Font.SourceSansBold
         creditLabel.TextSize = 20
         creditLabel.Text = "UI made by Tyrone_darealest"

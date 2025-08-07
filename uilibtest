@@ -3,12 +3,18 @@ local Library = {}
 Library.flags = {}
 Library.windowCount = 0
 
--- Your services like TweenService, UserInputService
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 
--- Helper function for click effect
+-- Helper to safely call user callbacks with error catching
+local function safeCall(func, ...)
+    local success, err = pcall(func, ...)
+    if not success then
+        warn("[Library Error]: Callback error - " .. tostring(err))
+    end
+end
+
 local function ClickEffect(guiObject)
     local circle = Instance.new("ImageLabel")
     circle.Name = "ClickEffect"
@@ -31,7 +37,6 @@ local function ClickEffect(guiObject)
     end)
 end
 
--- Draggable window helper
 local function Drag(gui)
     local dragging, dragInput, dragStart, startPos
 
@@ -58,12 +63,9 @@ local function Drag(gui)
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
-            gui.Position = UDim2.new(
-                math.clamp(startPos.X.Scale, 0, 1),
-                math.clamp(startPos.X.Offset + delta.X, 0, workspace.CurrentCamera.ViewportSize.X - gui.AbsoluteSize.X),
-                math.clamp(startPos.Y.Scale, 0, 1),
-                math.clamp(startPos.Y.Offset + delta.Y, 0, workspace.CurrentCamera.ViewportSize.Y - gui.AbsoluteSize.Y)
-            )
+            local newX = math.clamp(startPos.X.Offset + delta.X, 0, workspace.CurrentCamera.ViewportSize.X - gui.AbsoluteSize.X)
+            local newY = math.clamp(startPos.Y.Offset + delta.Y, 0, workspace.CurrentCamera.ViewportSize.Y - gui.AbsoluteSize.Y)
+            gui.Position = UDim2.new(startPos.X.Scale, newX, startPos.Y.Scale, newY)
         end
     end)
 end
@@ -71,7 +73,6 @@ end
 function Library:Window(title)
     self.windowCount = self.windowCount + 1
 
-    -- Main frame
     local windowFrame = Instance.new("Frame")
     windowFrame.Name = "Window" .. self.windowCount
     windowFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
@@ -79,11 +80,10 @@ function Library:Window(title)
     windowFrame.Position = UDim2.new(0, 25, 0, -30 + 36 * self.windowCount + 6 * self.windowCount)
     windowFrame.Size = UDim2.new(0, 212, 0, 36)
     windowFrame.ZIndex = 10
-    windowFrame.Parent = game.CoreGui -- Or wherever you want it
+    windowFrame.Parent = game.CoreGui
 
     Drag(windowFrame)
 
-    -- Header line with gradient
     local windowLine = Instance.new("Frame", windowFrame)
     windowLine.Name = "WindowLine"
     windowLine.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -100,7 +100,6 @@ function Library:Window(title)
         ColorSequenceKeypoint.new(1.00, Color3.fromRGB(43, 43, 43))
     }
 
-    -- Title label
     local header = Instance.new("TextLabel", windowFrame)
     header.Name = "Header"
     header.BackgroundTransparency = 1
@@ -112,7 +111,6 @@ function Library:Window(title)
     header.TextSize = 14
     header.TextXAlignment = Enum.TextXAlignment.Left
 
-    -- Toggle button
     local toggleButton = Instance.new("TextButton", windowFrame)
     toggleButton.Name = "WindowToggle"
     toggleButton.BackgroundTransparency = 1
@@ -132,7 +130,6 @@ function Library:Window(title)
     toggleImage.ImageRectSize = Vector2.new(36, 36)
     toggleImage.Rotation = 180
 
-    -- Bottom content frame (where tabs go)
     local bottomFrame = Instance.new("Frame", windowFrame)
     bottomFrame.Name = "Bottom"
     bottomFrame.BackgroundColor3 = Color3.fromRGB(38, 38, 38)
@@ -146,7 +143,6 @@ function Library:Window(title)
     bottomLayout.SortOrder = Enum.SortOrder.LayoutOrder
     bottomLayout.Padding = UDim.new(0, 4)
 
-    -- Tab buttons container
     local tabButtonsFrame = Instance.new("Frame", bottomFrame)
     tabButtonsFrame.Name = "TabButtons"
     tabButtonsFrame.BackgroundTransparency = 1
@@ -162,16 +158,14 @@ function Library:Window(title)
     local tabs = {}
     local currentTabContent = nil
 
-    -- Resize bottom frame depending on current tab content size
     local function resizeBottom()
         if currentTabContent then
             local contentSize = currentTabContent.Layout.AbsoluteContentSize.Y
-            local targetHeight = 36 + contentSize + 8 -- tab buttons + content + padding
+            local targetHeight = 36 + contentSize + 8
             bottomFrame:TweenSize(UDim2.new(0, 212, 0, targetHeight), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.25, true)
         end
     end
 
-    -- Window toggle open/close logic
     local opened = false
     toggleButton.MouseButton1Click:Connect(function()
         if opened then
@@ -191,11 +185,9 @@ function Library:Window(title)
         end
     end)
 
-    -- API to add tabs
     local windowAPI = {}
 
     function windowAPI:Tab(name)
-        -- Create tab button
         local tabButton = Instance.new("TextButton")
         tabButton.Name = name .. "Button"
         tabButton.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
@@ -208,7 +200,6 @@ function Library:Window(title)
         tabButton.Parent = tabButtonsFrame
         tabButton.AutoButtonColor = false
 
-        -- Tab content frame
         local tabContent = Instance.new("Frame", bottomFrame)
         tabContent.Name = name .. "Content"
         tabContent.BackgroundTransparency = 1
@@ -227,233 +218,297 @@ function Library:Window(title)
         tabs[name] = tabContent
 
         local function activateTab()
-            -- Hide previous tab content
             if currentTabContent then
                 currentTabContent.Visible = false
-                local prevButton = tabButtonsFrame:FindFirstChildWhichIsA("TextButton")
                 for _, btn in pairs(tabButtonsFrame:GetChildren()) do
                     if btn:IsA("TextButton") then
                         btn.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
                     end
                 end
             end
-            -- Show current tab content
-            tabContent.Visible = true
             currentTabContent = tabContent
+            tabContent.Visible = true
+            tabButton.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
 
-            -- Highlight this tab button
-            tabButton.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-
-            -- Resize bottom frame to fit content
-            RunService.Heartbeat:Wait() -- Wait one frame for layout to update
-            resizeBottom()
-
-            -- Open bottom frame if closed
-            if not opened then
-                toggleButton.MouseButton1Click:Wait() -- wait user to toggle or just open manually
-                bottomFrame.Size = UDim2.new(0, 212, 0, 36 + contentLayout.AbsoluteContentSize.Y + 8)
-                opened = true
-                TweenService:Create(toggleImage, TweenInfo.new(0.25), {Rotation = 0}):Play()
+            if opened then
+                local contentSize = tabContent.Layout.AbsoluteContentSize.Y
+                local targetHeight = 36 + contentSize + 8
+                bottomFrame:TweenSize(UDim2.new(0, 212, 0, targetHeight), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.25, true)
             end
         end
 
         tabButton.MouseButton1Click:Connect(function()
-            activateTab()
+            safeCall(activateTab)
         end)
 
-        -- Auto activate first tab created
         if not currentTabContent then
             activateTab()
         end
 
-        -- Return tab UI API for adding controls inside tab
         local tabAPI = {}
 
-        function tabAPI:Label(text)
-            local label = Instance.new("TextLabel")
-            label.Name = "Label"
-            label.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-            label.BorderSizePixel = 0
-            label.Size = UDim2.new(0, 203, 0, 26)
-            label.Font = Enum.Font.GothamSemibold
-            label.Text = text or ""
-            label.TextColor3 = Color3.fromRGB(255, 255, 255)
-            label.TextSize = 14
-            label.TextWrapped = true
-            label.Parent = tabContent
-            return label
-        end
-
         function tabAPI:Button(text, callback)
-            local btn = Instance.new("TextButton")
-            btn.Name = "Button"
-            btn.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
-            btn.BorderSizePixel = 0
-            btn.Size = UDim2.new(0, 203, 0, 26)
-            btn.Font = Enum.Font.GothamSemibold
-            btn.Text = text or ""
-            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            btn.TextSize = 14
-            btn.Parent = tabContent
+            local buttonFrame = Instance.new("Frame")
+            buttonFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+            buttonFrame.Size = UDim2.new(0, 212, 0, 24)
+            buttonFrame.BorderSizePixel = 0
+            buttonFrame.LayoutOrder = #tabContent:GetChildren() + 1
+            buttonFrame.Parent = tabContent
 
-            btn.MouseButton1Click:Connect(function()
-                ClickEffect(btn)
-                if callback then
-                    callback()
-                end
+            local button = Instance.new("TextButton")
+            button.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+            button.BorderSizePixel = 0
+            button.Position = UDim2.new(0, 0, 0, 0)
+            button.Size = UDim2.new(1, 0, 1, 0)
+            button.Font = Enum.Font.GothamSemibold
+            button.Text = text
+            button.TextColor3 = Color3.new(1, 1, 1)
+            button.TextSize = 14
+            button.Parent = buttonFrame
+            button.AutoButtonColor = false
+
+            button.MouseButton1Click:Connect(function()
+                ClickEffect(button)
+                safeCall(callback)
             end)
-            return btn
+
+            return button
         end
 
-        function tabAPI:Toggle(text, flagName, callback)
-            local frame = Instance.new("Frame")
-            frame.Name = "Toggle"
-            frame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-            frame.BorderSizePixel = 0
-            frame.Size = UDim2.new(0, 203, 0, 26)
-            frame.Parent = tabContent
+        function tabAPI:Toggle(text, default, callback)
+            local toggleFrame = Instance.new("Frame")
+            toggleFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+            toggleFrame.Size = UDim2.new(0, 212, 0, 24)
+            toggleFrame.BorderSizePixel = 0
+            toggleFrame.LayoutOrder = #tabContent:GetChildren() + 1
+            toggleFrame.Parent = tabContent
 
-            local label = Instance.new("TextLabel", frame)
-            label.Name = "Label"
+            local toggleButton = Instance.new("TextButton")
+            toggleButton.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+            toggleButton.BorderSizePixel = 0
+            toggleButton.Position = UDim2.new(0, 4, 0, 2)
+            toggleButton.Size = UDim2.new(0, 20, 0, 20)
+            toggleButton.Font = Enum.Font.SourceSans
+            toggleButton.Text = ""
+            toggleButton.Parent = toggleFrame
+            toggleButton.AutoButtonColor = false
+
+            local checkmark = Instance.new("ImageLabel")
+            checkmark.BackgroundTransparency = 1
+            checkmark.Image = "rbxassetid://3926305904"
+            checkmark.ImageRectOffset = Vector2.new(628, 316)
+            checkmark.ImageRectSize = Vector2.new(24, 24)
+            checkmark.Size = UDim2.new(1, 0, 1, 0)
+            checkmark.Visible = default
+            checkmark.Parent = toggleButton
+
+            local label = Instance.new("TextLabel")
             label.BackgroundTransparency = 1
-            label.Size = UDim2.new(1, -30, 1, 0)
-            label.Position = UDim2.new(0, 5, 0, 0)
+            label.Position = UDim2.new(0, 28, 0, 0)
+            label.Size = UDim2.new(1, -28, 1, 0)
             label.Font = Enum.Font.GothamSemibold
-            label.Text = text or ""
-            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            label.Text = text
+            label.TextColor3 = Color3.new(1, 1, 1)
             label.TextSize = 14
             label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Parent = toggleFrame
 
-            local toggleBtn = Instance.new("TextButton", frame)
-            toggleBtn.Name = "ToggleButton"
-            toggleBtn.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
-            toggleBtn.BorderSizePixel = 0
-            toggleBtn.Position = UDim2.new(1, -26, 0.5, -10)
-            toggleBtn.Size = UDim2.new(0, 20, 0, 20)
-            toggleBtn.AutoButtonColor = false
+            local toggled = default
+            Library.flags[text] = toggled
 
-            local toggleIndicator = Instance.new("Frame", toggleBtn)
-            toggleIndicator.Name = "Indicator"
-            toggleIndicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            toggleIndicator.BorderSizePixel = 0
-            toggleIndicator.Size = UDim2.new(0, 12, 0, 12)
-            toggleIndicator.Position = UDim2.new(0.5, -6, 0.5, -6)
-
-            local toggled = false
-            if flagName then
-                Library.flags[flagName] = false
-            end
-
-            local function setToggle(state)
-                toggled = state
-                if toggled then
-                    toggleIndicator.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
-                else
-                    toggleIndicator.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                end
-                if flagName then
-                    Library.flags[flagName] = toggled
-                end
-                if callback then
-                    callback(toggled)
-                end
-            end
-
-            toggleBtn.MouseButton1Click:Connect(function()
-                setToggle(not toggled)
-                ClickEffect(toggleBtn)
+            toggleButton.MouseButton1Click:Connect(function()
+                toggled = not toggled
+                Library.flags[text] = toggled
+                checkmark.Visible = toggled
+                safeCall(callback, toggled)
             end)
 
-            return frame
+            return toggleButton
         end
 
-        function tabAPI:Slider(text, min, max, default, flagName, callback)
+        function tabAPI:Slider(text, min, max, default, callback)
             local sliderFrame = Instance.new("Frame")
-            sliderFrame.Name = "Slider"
             sliderFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+            sliderFrame.Size = UDim2.new(0, 212, 0, 32)
             sliderFrame.BorderSizePixel = 0
-            sliderFrame.Size = UDim2.new(0, 203, 0, 30)
+            sliderFrame.LayoutOrder = #tabContent:GetChildren() + 1
             sliderFrame.Parent = tabContent
 
-            local label = Instance.new("TextLabel", sliderFrame)
-            label.Name = "Label"
+            local label = Instance.new("TextLabel")
             label.BackgroundTransparency = 1
-            label.Position = UDim2.new(0, 5, 0, 0)
-            label.Size = UDim2.new(1, -10, 0, 18)
+            label.Position = UDim2.new(0, 4, 0, 0)
+            label.Size = UDim2.new(0, 100, 0, 14)
             label.Font = Enum.Font.GothamSemibold
-            label.Text = text or ""
-            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            label.Text = text
+            label.TextColor3 = Color3.new(1, 1, 1)
             label.TextSize = 14
             label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Parent = sliderFrame
 
-            local sliderBar = Instance.new("Frame", sliderFrame)
-            sliderBar.Name = "SliderBar"
-            sliderBar.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
-            sliderBar.BorderSizePixel = 0
-            sliderBar.Position = UDim2.new(0, 5, 0, 20)
-            sliderBar.Size = UDim2.new(1, -10, 0, 6)
-            sliderBar.ClipsDescendants = true
-
-            local sliderFill = Instance.new("Frame", sliderBar)
-            sliderFill.Name = "Fill"
-            sliderFill.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            sliderFill.Size = UDim2.new(0, 0, 1, 0)
-
-            local valueLabel = Instance.new("TextLabel", sliderFrame)
-            valueLabel.Name = "ValueLabel"
+            local valueLabel = Instance.new("TextLabel")
             valueLabel.BackgroundTransparency = 1
-            valueLabel.Position = UDim2.new(0, 5, 0, 0)
-            valueLabel.Size = UDim2.new(1, -10, 0, 18)
+            valueLabel.Position = UDim2.new(1, -52, 0, 0)
+            valueLabel.Size = UDim2.new(0, 48, 0, 14)
             valueLabel.Font = Enum.Font.GothamSemibold
-            valueLabel.Text = tostring(default or min)
-            valueLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            valueLabel.Text = tostring(default)
+            valueLabel.TextColor3 = Color3.new(1, 1, 1)
             valueLabel.TextSize = 14
             valueLabel.TextXAlignment = Enum.TextXAlignment.Right
+            valueLabel.Parent = sliderFrame
+
+            local sliderBar = Instance.new("Frame")
+            sliderBar.BackgroundColor3 = Color3.fromRGB(67, 67, 67)
+            sliderBar.Position = UDim2.new(0, 4, 0, 18)
+            sliderBar.Size = UDim2.new(1, -8, 0, 8)
+            sliderBar.BorderSizePixel = 0
+            sliderBar.Parent = sliderFrame
+
+            local fillBar = Instance.new("Frame")
+            fillBar.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
+            fillBar.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+            fillBar.BorderSizePixel = 0
+            fillBar.Parent = sliderBar
 
             local dragging = false
 
-            local function updateSlider(inputPosX)
+            local function updateValue(inputPosX)
                 local relativeX = math.clamp(inputPosX - sliderBar.AbsolutePosition.X, 0, sliderBar.AbsoluteSize.X)
                 local percent = relativeX / sliderBar.AbsoluteSize.X
                 local value = math.floor(min + (max - min) * percent + 0.5)
-                sliderFill.Size = UDim2.new(percent, 0, 1, 0)
+                fillBar.Size = UDim2.new(percent, 0, 1, 0)
                 valueLabel.Text = tostring(value)
-                if flagName then
-                    Library.flags[flagName] = value
-                end
-                if callback then
-                    callback(value)
-                end
+                Library.flags[text] = value
+                safeCall(callback, value)
             end
 
             sliderBar.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragging = true
-                    updateSlider(input.Position.X)
-                    ClickEffect(sliderBar)
+                    updateValue(input.Position.X)
                 end
             end)
 
-            sliderBar.InputEnded:Connect(function(input)
+            sliderBar.InputChanged:Connect(function(input)
+                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                    updateValue(input.Position.X)
+                end
+            end)
+
+            UserInputService.InputEnded:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     dragging = false
                 end
             end)
 
-            UserInputService.InputChanged:Connect(function(input)
-                if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    updateSlider(input.Position.X)
-                end
-            end)
-
-            -- Initialize slider fill
-            local defaultPercent = ((default or min) - min) / (max - min)
-            sliderFill.Size = UDim2.new(defaultPercent, 0, 1, 0)
-            if flagName then
-                Library.flags[flagName] = default or min
-            end
+            Library.flags[text] = default
 
             return sliderFrame
+        end
+
+        function tabAPI:Dropdown(text, items, defaultIndex, callback)
+            local dropdownFrame = Instance.new("Frame")
+            dropdownFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+            dropdownFrame.Size = UDim2.new(0, 212, 0, 24)
+            dropdownFrame.BorderSizePixel = 0
+            dropdownFrame.LayoutOrder = #tabContent:GetChildren() + 1
+            dropdownFrame.Parent = tabContent
+
+            local label = Instance.new("TextLabel")
+            label.BackgroundTransparency = 1
+            label.Position = UDim2.new(0, 4, 0, 0)
+            label.Size = UDim2.new(0, 100, 0, 24)
+            label.Font = Enum.Font.GothamSemibold
+            label.Text = text
+            label.TextColor3 = Color3.new(1, 1, 1)
+            label.TextSize = 14
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Parent = dropdownFrame
+
+            local selectedIndex = defaultIndex or 1
+            Library.flags[text] = items[selectedIndex]
+
+            local dropdownButton = Instance.new("TextButton")
+            dropdownButton.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+            dropdownButton.BorderSizePixel = 0
+            dropdownButton.Position = UDim2.new(1, -100, 0, 0)
+            dropdownButton.Size = UDim2.new(0, 96, 0, 24)
+            dropdownButton.Font = Enum.Font.GothamSemibold
+            dropdownButton.Text = items[selectedIndex]
+            dropdownButton.TextColor3 = Color3.new(1, 1, 1)
+            dropdownButton.TextSize = 14
+            dropdownButton.Parent = dropdownFrame
+            dropdownButton.AutoButtonColor = false
+
+            local listOpen = false
+            local listFrame = Instance.new("Frame")
+            listFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+            listFrame.BorderSizePixel = 0
+            listFrame.Position = UDim2.new(0, 0, 1, 4)
+            listFrame.Size = UDim2.new(1, 0, 0, 0)
+            listFrame.ClipsDescendants = true
+            listFrame.Parent = dropdownFrame
+
+            local listLayout = Instance.new("UIListLayout", listFrame)
+            listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            listLayout.Padding = UDim.new(0, 2)
+
+            local function toggleList()
+                if listOpen then
+                    listFrame:TweenSize(UDim2.new(1, 0, 0, 0), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.25, true)
+                    listOpen = false
+                else
+                    local contentHeight = #items * 24 + (#items - 1) * 2
+                    listFrame:TweenSize(UDim2.new(1, 0, 0, contentHeight), Enum.EasingDirection.InOut, Enum.EasingStyle.Sine, 0.25, true)
+                    listOpen = true
+                end
+            end
+
+            dropdownButton.MouseButton1Click:Connect(function()
+                safeCall(toggleList)
+            end)
+
+            for i, item in ipairs(items) do
+                local itemButton = Instance.new("TextButton")
+                itemButton.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+                itemButton.BorderSizePixel = 0
+                itemButton.Size = UDim2.new(1, 0, 0, 24)
+                itemButton.Font = Enum.Font.GothamSemibold
+                itemButton.Text = item
+                itemButton.TextColor3 = Color3.new(1, 1, 1)
+                itemButton.TextSize = 14
+                itemButton.Parent = listFrame
+                itemButton.AutoButtonColor = false
+
+                itemButton.MouseButton1Click:Connect(function()
+                    selectedIndex = i
+                    dropdownButton.Text = items[selectedIndex]
+                    Library.flags[text] = items[selectedIndex]
+                    safeCall(callback, items[selectedIndex])
+                    toggleList()
+                end)
+            end
+
+            return dropdownFrame
+        end
+
+        function tabAPI:Label(text)
+            local labelFrame = Instance.new("Frame")
+            labelFrame.BackgroundTransparency = 1
+            labelFrame.Size = UDim2.new(0, 212, 0, 18)
+            labelFrame.LayoutOrder = #tabContent:GetChildren() + 1
+            labelFrame.Parent = tabContent
+
+            local label = Instance.new("TextLabel")
+            label.BackgroundTransparency = 1
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.Font = Enum.Font.GothamSemibold
+            label.Text = text
+            label.TextColor3 = Color3.new(1, 1, 1)
+            label.TextSize = 14
+            label.TextXAlignment = Enum.TextXAlignment.Left
+            label.Parent = labelFrame
+
+            return label
         end
 
         return tabAPI

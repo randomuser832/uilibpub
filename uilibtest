@@ -22,6 +22,7 @@ function UILibrary:Window(title)
     local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
     gui.Name = "TyroneUI"
     gui.ResetOnSpawn = false
+    gui.Enabled = true
 
     local main = Instance.new("Frame", gui)
     main.Size = UDim2.new(0, 500, 0, 320)
@@ -31,15 +32,13 @@ function UILibrary:Window(title)
     main.Active = true
     main.Draggable = true
     main.ClipsDescendants = true
-    local mainCorner = Instance.new("UICorner", main)
-    mainCorner.CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
 
     local titleBar = Instance.new("Frame", main)
     titleBar.Size = UDim2.new(1, 0, 0, 30)
     titleBar.BackgroundColor3 = config.titleBarBackground
     titleBar.BorderSizePixel = 0
-    local titleBarCorner = Instance.new("UICorner", titleBar)
-    titleBarCorner.CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 12)
 
     local titleLabel = Instance.new("TextLabel", titleBar)
     titleLabel.Size = UDim2.new(1, -40, 1, 0)
@@ -60,17 +59,16 @@ function UILibrary:Window(title)
     minimize.TextColor3 = config.textColor
     minimize.BackgroundColor3 = titleBar.BackgroundColor3
     minimize.BorderSizePixel = 0
-    local minCorner = Instance.new("UICorner", minimize)
-    minCorner.CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", minimize).CornerRadius = UDim.new(0, 12)
 
     local tabsFrame = Instance.new("Frame", main)
     tabsFrame.Size = UDim2.new(0, 120, 1, -30)
     tabsFrame.Position = UDim2.new(0, 0, 0, 30)
     tabsFrame.BackgroundColor3 = config.tabsBackground
     tabsFrame.BorderSizePixel = 0
-    local tabsCorner = Instance.new("UICorner", tabsFrame)
-    tabsCorner.CornerRadius = UDim.new(0, 10)
+    Instance.new("UICorner", tabsFrame).CornerRadius = UDim.new(0, 10)
 
+    local UIListLayout.new(tabsFrame).Padding = UDim.new(0, 6)
     local tabListLayout = Instance.new("UIListLayout", tabsFrame)
     tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     tabListLayout.Padding = UDim.new(0, 6)
@@ -80,8 +78,7 @@ function UILibrary:Window(title)
     contentFrame.Size = UDim2.new(1, -130, 1, -45)
     contentFrame.BackgroundColor3 = config.contentBackground
     contentFrame.BorderSizePixel = 0
-    local contentCorner = Instance.new("UICorner", contentFrame)
-    contentCorner.CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", contentFrame).CornerRadius = UDim.new(0, 12)
 
     local tabs = {}
     local tabButtons = {}
@@ -117,8 +114,7 @@ function UILibrary:Window(title)
         btn.TextSize = 16
         btn.Text = name
         btn.Parent = tabsFrame
-        local btnCorner = Instance.new("UICorner", btn)
-        btnCorner.CornerRadius = UDim.new(0, 8)
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
 
         local frame = Instance.new("ScrollingFrame")
         frame.Size = UDim2.new(1, 0, 1, 0)
@@ -342,8 +338,7 @@ function UILibrary:Window(title)
             bar.Position = UDim2.new(0, 0, 0, 30)
             bar.BackgroundColor3 = config.buttonBackground
             bar.BorderSizePixel = 0
-            local barCorner = Instance.new("UICorner", bar)
-            barCorner.CornerRadius = UDim.new(0, 5)
+            Instance.new("UICorner", bar).CornerRadius = UDim.new(0, 5)
 
             local knob = Instance.new("ImageButton", bar)
             knob.Size = UDim2.new(0, 24, 0, 24)
@@ -351,8 +346,7 @@ function UILibrary:Window(title)
             knob.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
             knob.AutoButtonColor = false
             knob.Image = ""
-            local knobCorner = Instance.new("UICorner", knob)
-            knobCorner.CornerRadius = UDim.new(0, 12)
+            Instance.new("UICorner", knob).CornerRadius = UDim.new(0, 12)
 
             local dragging = false
 
@@ -400,10 +394,10 @@ function UILibrary:Window(title)
         return tabAPI
     end
 
-    -- Keybind Toggle (default)
+    -- Keybind toggle default is LeftControl
     local ToggleKey = Enum.KeyCode.LeftControl
 
-    -- Create Settings tab with Keybind controls
+    -- Settings tab for toggle key binding
     local settingsTab = self:CreateTab("Settings")
 
     local keybindLabel = Instance.new("TextLabel")
@@ -437,7 +431,6 @@ function UILibrary:Window(title)
             keybindBox.PlaceholderText = ToggleKey.Name
             keybindBox.Text = ""
         else
-            -- Invalid key, reset input box text
             keybindBox.Text = ""
         end
     end)
@@ -449,7 +442,7 @@ function UILibrary:Window(title)
         end
     end)
 
-    -- Minimize logic
+    -- Minimize toggle logic
     local minimized = false
     minimize.MouseButton1Click:Connect(function()
         minimized = not minimized

@@ -1,4 +1,4 @@
--- IreXion UI Library (All-in-One)
+-- IreXion UI Library (All-in-One, Fixed & Improved)
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
@@ -11,7 +11,7 @@ library.theme = {
     AccentColor = Color3.fromRGB(0, 255, 0),
     FontColor = Color3.fromRGB(255, 255, 255),
     ToggleOn = Color3.fromRGB(0, 255, 0),
-    ToggleOff = Color3.fromRGB(80, 80, 80)
+    ToggleOff = Color3.fromRGB(80, 80, 80),
 }
 
 -- Create main GUI container
@@ -30,6 +30,10 @@ mainFrame.BorderSizePixel = 0
 mainFrame.Parent = gui
 mainFrame.ClipsDescendants = true
 
+local mainUICorner = Instance.new("UICorner")
+mainUICorner.CornerRadius = UDim.new(0, 12)
+mainUICorner.Parent = mainFrame
+
 -- State for minimized or not
 local isMinimized = false
 
@@ -39,6 +43,10 @@ header.Size = UDim2.new(1, 0, 0, 30)
 header.BackgroundColor3 = library.theme.TabColor
 header.BorderSizePixel = 0
 header.Parent = mainFrame
+
+local headerUICorner = Instance.new("UICorner")
+headerUICorner.CornerRadius = UDim.new(0, 12)
+headerUICorner.Parent = header
 
 local headerLabel = Instance.new("TextLabel")
 headerLabel.Size = UDim2.new(1, -60, 1, 0)
@@ -70,6 +78,10 @@ tabList.BackgroundColor3 = library.theme.SectionColor
 tabList.BorderSizePixel = 0
 tabList.Parent = mainFrame
 
+local tabListUICorner = Instance.new("UICorner")
+tabListUICorner.CornerRadius = UDim.new(0, 12)
+tabListUICorner.Parent = tabList
+
 local tabListLayout = Instance.new("UIListLayout")
 tabListLayout.Padding = UDim.new(0, 5)
 tabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -83,6 +95,10 @@ contentFrame.BackgroundColor3 = library.theme.MainColor
 contentFrame.BorderSizePixel = 0
 contentFrame.ClipsDescendants = true
 contentFrame.Parent = mainFrame
+
+local contentUICorner = Instance.new("UICorner")
+contentUICorner.CornerRadius = UDim.new(0, 12)
+contentUICorner.Parent = contentFrame
 
 local contentUIList = Instance.new("UIListLayout")
 contentUIList.SortOrder = Enum.SortOrder.LayoutOrder
@@ -109,31 +125,26 @@ local tabButtons = {}
 -- Helper function: TweenSize for sliding tab transition
 local function slideTab(oldTab, newTab)
     if oldTab then
-        -- Slide oldTab left and hide
         TweenService:Create(oldTab, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
             {Position = UDim2.new(-1, 0, 0, 0)}):Play()
         delay(0.25, function() oldTab.Visible = false end)
     end
-    -- Prepare newTab to right and show
     newTab.Position = UDim2.new(1, 0, 0, 0)
     newTab.Visible = true
-    -- Slide newTab in from right to center
     TweenService:Create(newTab, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
         {Position = UDim2.new(0, 0, 0, 0)}):Play()
 end
 
 -- Create Tab function
 function library:CreateTab(name)
-    -- Content Frame for this tab
     local tabFrame = Instance.new("Frame")
     tabFrame.Name = name
     tabFrame.Size = UDim2.new(1, 0, 1, 0)
-    tabFrame.Position = UDim2.new(1, 0, 0, 0) -- Start off-screen right
+    tabFrame.Position = UDim2.new(1, 0, 0, 0)
     tabFrame.BackgroundTransparency = 1
     tabFrame.Visible = false
     tabFrame.Parent = contentFrame
 
-    -- Padding for content inside tab
     local padding = Instance.new("UIPadding")
     padding.PaddingTop = UDim.new(0, 10)
     padding.PaddingLeft = UDim.new(0, 10)
@@ -141,13 +152,11 @@ function library:CreateTab(name)
     padding.PaddingBottom = UDim.new(0, 10)
     padding.Parent = tabFrame
 
-    -- Layout for content
     local layout = Instance.new("UIListLayout")
     layout.SortOrder = Enum.SortOrder.LayoutOrder
     layout.Padding = UDim.new(0, 6)
     layout.Parent = tabFrame
 
-    -- Create tab button on side panel
     local tabBtn = Instance.new("TextButton")
     tabBtn.Size = UDim2.new(1, 0, 0, 30)
     tabBtn.BackgroundColor3 = library.theme.TabColor
@@ -158,11 +167,9 @@ function library:CreateTab(name)
     tabBtn.BorderSizePixel = 0
     tabBtn.Parent = tabList
 
-    -- Add to internal tables
     tabs[#tabs + 1] = tabFrame
     tabButtons[#tabButtons + 1] = tabBtn
 
-    -- Tab button click handler
     tabBtn.MouseButton1Click:Connect(function()
         local currentTab = nil
         for _, t in ipairs(tabs) do
@@ -176,13 +183,11 @@ function library:CreateTab(name)
         end
     end)
 
-    -- If first tab, show it
     if #tabs == 1 then
         tabFrame.Visible = true
         tabFrame.Position = UDim2.new(0, 0, 0, 0)
     end
 
-    -- Return the tab Frame for adding components
     return tabFrame
 end
 
@@ -234,14 +239,15 @@ function library:CreateToggle(tab, text, default, callback)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = container
 
-    local toggle = Instance.new("Frame")
+    -- Use TextButton instead of Frame for toggle background for Cursor support
+    local toggle = Instance.new("TextButton")
     toggle.Size = UDim2.new(0, 40, 0, 20)
     toggle.BackgroundColor3 = default and library.theme.ToggleOn or library.theme.ToggleOff
     toggle.Position = UDim2.new(1, -45, 0, 5)
     toggle.BorderSizePixel = 0
+    toggle.AutoButtonColor = false
     toggle.Parent = container
     toggle.ClipsDescendants = true
-    toggle.Cursor = "PointingHand"
 
     local circle = Instance.new("Frame")
     circle.Size = UDim2.new(0, 16, 0, 16)
@@ -259,12 +265,10 @@ function library:CreateToggle(tab, text, default, callback)
         TweenService:Create(circle, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {Position = goalPos}):Play()
     end
 
-    toggle.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            toggled = not toggled
-            updateVisual()
-            if callback then callback(toggled) end
-        end
+    toggle.MouseButton1Click:Connect(function()
+        toggled = not toggled
+        updateVisual()
+        if callback then callback(toggled) end
     end)
 
     updateVisual()
@@ -296,12 +300,17 @@ function library:CreateSlider(tab, text, min, max, default, callback)
     sliderBg.BorderSizePixel = 0
     sliderBg.Parent = container
     sliderBg.ClipsDescendants = true
-    sliderBg.Cursor = "PointingHand"
 
-    local sliderFill = Instance.new("Frame")
+    local sliderUICorner = Instance.new("UICorner")
+    sliderUICorner.CornerRadius = UDim.new(0, 8)
+    sliderUICorner.Parent = sliderBg
+
+    -- Use TextButton for slider fill to support Cursor
+    local sliderFill = Instance.new("TextButton")
     sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
     sliderFill.BackgroundColor3 = library.theme.AccentColor
     sliderFill.BorderSizePixel = 0
+    sliderFill.AutoButtonColor = false
     sliderFill.Parent = sliderBg
 
     local dragging = false
@@ -332,6 +341,23 @@ function library:CreateSlider(tab, text, min, max, default, callback)
         end
     end)
 
+    sliderFill.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+            updateValue(input.Position.X)
+        end
+    end)
+    sliderFill.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+    sliderFill.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            updateValue(input.Position.X)
+        end
+    end)
+
     -- Initialize slider fill size
     sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
 
@@ -356,210 +382,168 @@ function library:CreateInputBox(tab, text, default, callback, numberOnly)
     label.Parent = container
 
     local inputBox = Instance.new("TextBox")
-    inputBox.Size = UDim2.new(1, 0, 0, 20)
+    inputBox.Size = UDim2.new(1, 0, 0, 22)
     inputBox.Position = UDim2.new(0, 0, 0, 18)
     inputBox.BackgroundColor3 = library.theme.SectionColor
     inputBox.TextColor3 = library.theme.FontColor
     inputBox.Text = tostring(default or "")
-    inputBox.ClearTextOnFocus = false
     inputBox.Font = Enum.Font.SourceSans
     inputBox.TextSize = 16
-    inputBox.BorderSizePixel = 0
+    inputBox.ClearTextOnFocus = false
     inputBox.Parent = container
+    inputBox.BorderSizePixel = 0
 
-    if numberOnly then
-        inputBox.FocusLost:Connect(function(enterPressed)
-            local num = tonumber(inputBox.Text)
-            if num then
-                inputBox.Text = tostring(num)
-                if callback then callback(num) end
-            else
-                inputBox.Text = tostring(default or "")
+    local inputUICorner = Instance.new("UICorner")
+    inputUICorner.CornerRadius = UDim.new(0, 6)
+    inputUICorner.Parent = inputBox
+
+    inputBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            local val = inputBox.Text
+            if numberOnly then
+                val = tonumber(val)
+                if not val then
+                    inputBox.Text = tostring(default or "")
+                    return
+                end
             end
-        end)
-    else
-        inputBox.FocusLost:Connect(function(enterPressed)
-            if callback then callback(inputBox.Text) end
-        end)
-    end
+            if callback then callback(val) end
+        end
+    end)
 
     return container
 end
 
--- Create Dropdown (single-select)
-function library:CreateDropdown(tab, text, options, defaultIndex, callback)
+-- Create Dropdown menu
+function library:CreateDropdown(tab, text, options, default, callback)
     local container = Instance.new("Frame")
-    container.Size = UDim2.new(1, 0, 0, 35)
+    container.Size = UDim2.new(1, 0, 0, 40)
     container.BackgroundTransparency = 1
     container.Parent = tab
 
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(0.4, 0, 1, 0)
+    label.Size = UDim2.new(1, -10, 0, 14)
     label.BackgroundTransparency = 1
     label.Text = text
     label.TextColor3 = library.theme.FontColor
     label.Font = Enum.Font.SourceSans
-    label.TextSize = 16
+    label.TextSize = 14
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = container
 
     local dropdownBtn = Instance.new("TextButton")
-    dropdownBtn.Size = UDim2.new(0.6, -10, 1, 0)
-    dropdownBtn.Position = UDim2.new(0.4, 10, 0, 0)
+    dropdownBtn.Size = UDim2.new(1, 0, 0, 22)
+    dropdownBtn.Position = UDim2.new(0, 0, 0, 18)
     dropdownBtn.BackgroundColor3 = library.theme.SectionColor
     dropdownBtn.TextColor3 = library.theme.FontColor
+    dropdownBtn.Text = default or "Select..."
     dropdownBtn.Font = Enum.Font.SourceSans
     dropdownBtn.TextSize = 16
-    dropdownBtn.Text = options[defaultIndex] or "Select"
     dropdownBtn.BorderSizePixel = 0
+    dropdownBtn.AutoButtonColor = false
     dropdownBtn.Parent = container
-    dropdownBtn.AutoButtonColor = true
+
+    local dropdownUICorner = Instance.new("UICorner")
+    dropdownUICorner.CornerRadius = UDim.new(0, 6)
+    dropdownUICorner.Parent = dropdownBtn
 
     local dropdownOpen = false
+    local dropdownList = Instance.new("Frame")
+    dropdownList.Size = UDim2.new(1, 0, 0, 0)
+    dropdownList.Position = UDim2.new(0, 0, 1, 2)
+    dropdownList.BackgroundColor3 = library.theme.SectionColor
+    dropdownList.BorderSizePixel = 0
+    dropdownList.ClipsDescendants = true
+    dropdownList.Parent = container
 
-    -- Dropdown list frame
-    local listFrame = Instance.new("Frame")
-    listFrame.Size = UDim2.new(0.6, -10, 0, 0)
-    listFrame.Position = UDim2.new(0.4, 10, 1, 2)
-    listFrame.BackgroundColor3 = library.theme.SectionColor
-    listFrame.BorderSizePixel = 0
-    listFrame.ClipsDescendants = true
-    listFrame.Parent = container
-    listFrame.Visible = false
+    local dropdownLayout = Instance.new("UIListLayout")
+    dropdownLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    dropdownLayout.Padding = UDim.new(0, 3)
+    dropdownLayout.Parent = dropdownList
 
-    local listLayout = Instance.new("UIListLayout")
-    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    listLayout.Padding = UDim.new(0, 2)
-    listLayout.Parent = listFrame
-
-    local function closeDropdown()
-        dropdownOpen = false
-        TweenService:Create(listFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-            {Size = UDim2.new(listFrame.Size.X.Scale, listFrame.Size.X.Offset, 0, 0)}):Play()
-        delay(0.2, function() listFrame.Visible = false end)
-    end
-
-    local function openDropdown()
-        dropdownOpen = true
-        listFrame.Visible = true
-        local targetHeight = math.min(#options * 25, 150)
-        TweenService:Create(listFrame, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-            {Size = UDim2.new(listFrame.Size.X.Scale, listFrame.Size.X.Offset, 0, targetHeight)}):Play()
-    end
-
-    dropdownBtn.MouseButton1Click:Connect(function()
-        if dropdownOpen then
-            closeDropdown()
-        else
-            openDropdown()
-        end
-    end)
-
-    -- Populate list options
-    for i, option in ipairs(options) do
+    -- Populate dropdown options
+    for _, option in ipairs(options) do
         local optionBtn = Instance.new("TextButton")
         optionBtn.Size = UDim2.new(1, 0, 0, 25)
-        optionBtn.BackgroundColor3 = library.theme.MainColor
+        optionBtn.BackgroundColor3 = library.theme.TabColor
         optionBtn.TextColor3 = library.theme.FontColor
-        optionBtn.Font = Enum.Font.SourceSans
-        optionBtn.TextSize = 14
         optionBtn.Text = option
+        optionBtn.Font = Enum.Font.SourceSans
+        optionBtn.TextSize = 16
         optionBtn.BorderSizePixel = 0
-        optionBtn.Parent = listFrame
+        optionBtn.Parent = dropdownList
 
         optionBtn.MouseButton1Click:Connect(function()
             dropdownBtn.Text = option
             if callback then
-                callback(option, i)
+                callback(option)
             end
-            closeDropdown()
+            -- Close dropdown
+            dropdownOpen = false
+            TweenService:Create(dropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 0)}):Play()
         end)
     end
 
-    -- Initialize selection to default
-    dropdownBtn.Text = options[defaultIndex] or "Select"
+    dropdownBtn.MouseButton1Click:Connect(function()
+        dropdownOpen = not dropdownOpen
+        if dropdownOpen then
+            local targetHeight = math.min(#options * 28, 150)
+            TweenService:Create(dropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, targetHeight)}):Play()
+        else
+            TweenService:Create(dropdownList, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+        end
+    end)
 
     return container
 end
 
--- Notification system
-local function createNotification(text, duration)
-    duration = duration or 3
-    local notifFrame = Instance.new("Frame")
-    notifFrame.Size = UDim2.new(1, 0, 0, 40)
-    notifFrame.BackgroundColor3 = library.theme.SectionColor
-    notifFrame.BorderSizePixel = 0
-    notifFrame.AnchorPoint = Vector2.new(1, 0)
-    notifFrame.Position = UDim2.new(1, 0, 0, 0)
-    notifFrame.Parent = notificationContainer
-    notifFrame.ClipsDescendants = true
-    notifFrame.BackgroundTransparency = 0
-
-    local notifText = Instance.new("TextLabel")
-    notifText.Size = UDim2.new(1, -10, 1, 0)
-    notifText.Position = UDim2.new(0, 10, 0, 0)
-    notifText.BackgroundTransparency = 1
-    notifText.Text = text
-    notifText.TextColor3 = library.theme.FontColor
-    notifText.TextWrapped = true
-    notifText.Font = Enum.Font.SourceSans
-    notifText.TextSize = 14
-    notifText.TextXAlignment = Enum.TextXAlignment.Left
-    notifText.Parent = notifFrame
-
-    notificationLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Wait()
-
-    -- Animate in
-    notifFrame.Position = UDim2.new(1, 50, 0, 0)
-    notifFrame.BackgroundTransparency = 1
-    TweenService:Create(notifFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-        {Position = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 0}):Play()
-
-    -- Auto dismiss
-    delay(duration, function()
-        TweenService:Create(notifFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In),
-            {Position = UDim2.new(1, 50, 0, 0), BackgroundTransparency = 1}):Play()
-        wait(0.3)
-        notifFrame:Destroy()
-    end)
-end
-
-function library:Notify(text, duration)
-    createNotification(text, duration)
-end
-
--- Toggle window visibility
-function library:ToggleWindow(state)
-    gui.Enabled = state
-end
-
--- Keybind to toggle UI visibility
-function library:CreateKeybind(key)
-    local bind = Enum.KeyCode[key] or Enum.KeyCode.RightShift
-    UserInputService.InputBegan:Connect(function(input, gpe)
-        if not gpe and input.KeyCode == bind then
-            gui.Enabled = not gui.Enabled
-        end
-    end)
-end
-
--- Minimize button functionality (collapse/expand whole window)
+-- Minimize button functionality: collapses mainFrame height to header only
 minimizeBtn.MouseButton1Click:Connect(function()
-    if not isMinimized then
-        -- Minimize: shrink window height to just header
-        isMinimized = true
-        TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {Size = UDim2.new(0, 450, 0, 30)}):Play()
-    else
-        -- Expand to full size
+    if isMinimized then
+        -- Restore size
+        TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 450, 0, 300)}):Play()
         isMinimized = false
-        TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            {Size = UDim2.new(0, 450, 0, 300)}):Play()
+    else
+        -- Minimize to header only
+        TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(0, 450, 0, 30)}):Play()
+        isMinimized = true
     end
 end)
 
--- Auto-init keybind toggle
-library:CreateKeybind("RightShift")
+-- Notification function
+function library:Notify(text, duration)
+    duration = duration or 4
+    local notification = Instance.new("Frame")
+    notification.Size = UDim2.new(1, 0, 0, 50)
+    notification.BackgroundColor3 = library.theme.SectionColor
+    notification.BorderSizePixel = 0
+    notification.Parent = notificationContainer
 
--- Return library for usage
+    local notificationUICorner = Instance.new("UICorner")
+    notificationUICorner.CornerRadius = UDim.new(0, 12)
+    notificationUICorner.Parent = notification
+
+    local notificationLabel = Instance.new("TextLabel")
+    notificationLabel.Size = UDim2.new(1, -10, 1, 0)
+    notificationLabel.Position = UDim2.new(0, 10, 0, 0)
+    notificationLabel.BackgroundTransparency = 1
+    notificationLabel.Text = text
+    notificationLabel.TextColor3 = library.theme.FontColor
+    notificationLabel.Font = Enum.Font.SourceSans
+    notificationLabel.TextSize = 16
+    notificationLabel.TextWrapped = true
+    notificationLabel.TextXAlignment = Enum.TextXAlignment.Left
+    notificationLabel.Parent = notification
+
+    -- Animate appearing
+    notification.Size = UDim2.new(1, 0, 0, 0)
+    TweenService:Create(notification, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 50)}):Play()
+
+    delay(duration, function()
+        TweenService:Create(notification, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+        wait(0.3)
+        notification:Destroy()
+    end)
+end
+
 return library

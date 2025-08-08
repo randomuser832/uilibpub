@@ -1,233 +1,147 @@
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
+local uis = game:GetService("UserInputService")
+local ts = game:GetService("TweenService")
+local coregui = game:GetService("CoreGui")
 
--- Create ScreenGui
-local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "SimpleUI"
-screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+local library = {}
+library.theme = {
+    MainColor = Color3.fromRGB(30, 30, 30),
+    TabColor = Color3.fromRGB(20, 20, 20),
+    SectionColor = Color3.fromRGB(40, 40, 40),
+    AccentColor = Color3.fromRGB(0, 255, 0),
+    FontColor = Color3.fromRGB(255, 255, 255)
+}
 
--- Main Frame (the container for everything)
+local gui = Instance.new("ScreenGui")
+gui.Name = "IreXionUILib"
+gui.ResetOnSpawn = false
+gui.Parent = coregui
+
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 250, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -125, 0.5, -200)
-mainFrame.BackgroundColor3 = Color3.fromRGB(32, 32, 32)
-mainFrame.Parent = screenGui
+mainFrame.Size = UDim2.new(0, 450, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
+mainFrame.BackgroundColor3 = library.theme.MainColor
+mainFrame.BorderSizePixel = 0
+mainFrame.Parent = gui
 
--- UI List Layout for Tabs container
-local tabsFrame = Instance.new("Frame")
-tabsFrame.Size = UDim2.new(0, 60, 1, 0)
-tabsFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-tabsFrame.Parent = mainFrame
+local header = Instance.new("TextLabel")
+header.Size = UDim2.new(1, 0, 0, 30)
+header.BackgroundColor3 = library.theme.TabColor
+header.Text = "  IreXion - UI Library"
+header.TextColor3 = library.theme.FontColor
+header.TextXAlignment = Enum.TextXAlignment.Left
+header.Font = Enum.Font.SourceSansBold
+header.TextSize = 18
+header.Parent = mainFrame
 
-local tabsLayout = Instance.new("UIListLayout")
-tabsLayout.Parent = tabsFrame
-tabsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-tabsLayout.Padding = UDim.new(0, 2)
+local tabList = Instance.new("Frame")
+tabList.Size = UDim2.new(0, 100, 1, -30)
+tabList.Position = UDim2.new(0, 0, 0, 30)
+tabList.BackgroundColor3 = library.theme.SectionColor
+tabList.BorderSizePixel = 0
+tabList.Parent = mainFrame
 
--- Content Frame where tab contents go
 local contentFrame = Instance.new("Frame")
-contentFrame.Size = UDim2.new(1, -60, 1, 0)
-contentFrame.Position = UDim2.new(0, 60, 0, 0)
-contentFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
+contentFrame.Size = UDim2.new(1, -100, 1, -30)
+contentFrame.Position = UDim2.new(0, 100, 0, 30)
+contentFrame.BackgroundColor3 = library.theme.MainColor
+contentFrame.BorderSizePixel = 0
 contentFrame.Parent = mainFrame
 
-local contentLayout = Instance.new("UIListLayout")
-contentLayout.Parent = contentFrame
-contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-contentLayout.Padding = UDim.new(0, 4)
+local uipadding = Instance.new("UIPadding", contentFrame)
+uipadding.PaddingTop = UDim.new(0, 10)
+uipadding.PaddingLeft = UDim.new(0, 10)
+uipadding.PaddingRight = UDim.new(0, 10)
+uipadding.PaddingBottom = UDim.new(0, 10)
 
--- Helper function to create tab buttons
-local function createTab(name)
-    local tabButton = Instance.new("TextButton")
-    tabButton.Size = UDim2.new(1, 0, 0, 40)
-    tabButton.Text = name
-    tabButton.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
-    tabButton.TextColor3 = Color3.new(1,1,1)
-    tabButton.Font = Enum.Font.GothamSemibold
-    tabButton.TextSize = 14
-    tabButton.Parent = tabsFrame
-    return tabButton
+local tabButtons = {}
+
+function library:CreateTab(name)
+    local tab = Instance.new("Frame")
+    tab.Name = name
+    tab.Size = UDim2.new(1, 0, 1, 0)
+    tab.BackgroundTransparency = 1
+    tab.Visible = false
+    tab.Parent = contentFrame
+
+    local layout = Instance.new("UIListLayout", tab)
+    layout.Padding = UDim.new(0, 6)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 0, 30)
+    button.Text = name
+    button.BackgroundColor3 = library.theme.TabColor
+    button.TextColor3 = library.theme.FontColor
+    button.Font = Enum.Font.SourceSans
+    button.TextSize = 16
+    button.Parent = tabList
+
+    button.MouseButton1Click:Connect(function()
+        for _, other in ipairs(contentFrame:GetChildren()) do
+            if other:IsA("Frame") then
+                other.Visible = false
+            end
+        end
+        tab.Visible = true
+    end)
+
+    table.insert(tabButtons, button)
+    if #tabButtons == 1 then tab.Visible = true end
+
+    return tab
 end
 
--- Helper function to create buttons inside content frame
-local function createButton(text, onClick)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, 0, 0, 30)
-    btn.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-    btn.Text = "  " .. text
-    btn.TextColor3 = Color3.new(1, 1, 1)
-    btn.Font = Enum.Font.GothamSemibold
-    btn.TextSize = 14
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.Parent = contentFrame
+function library:CreateButton(tab, text, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 0, 30)
+    button.Text = text
+    button.BackgroundColor3 = library.theme.SectionColor
+    button.TextColor3 = library.theme.FontColor
+    button.Font = Enum.Font.SourceSans
+    button.TextSize = 16
+    button.Parent = tab
 
-    btn.MouseButton1Click:Connect(function()
-        onClick()
-        -- Simple click effect (fade)
-        local tween = TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)})
-        tween:Play()
-        tween.Completed:Wait()
-        TweenService:Create(btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(43, 43, 43)}):Play()
+    button.MouseButton1Click:Connect(function()
+        if callback then callback() end
     end)
 end
 
--- Helper function for Toggle
-local function createToggle(text, default, callback)
-    local toggleBtn = Instance.new("TextButton")
-    toggleBtn.Size = UDim2.new(1, 0, 0, 30)
-    toggleBtn.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-    toggleBtn.Text = "  " .. text
-    toggleBtn.TextColor3 = Color3.new(1, 1, 1)
-    toggleBtn.Font = Enum.Font.GothamSemibold
-    toggleBtn.TextSize = 14
-    toggleBtn.TextXAlignment = Enum.TextXAlignment.Left
-    toggleBtn.Parent = contentFrame
-
-    local toggled = default or false
-    local indicator = Instance.new("Frame")
-    indicator.Size = UDim2.new(0, 15, 0, 15)
-    indicator.Position = UDim2.new(1, -20, 0.5, -7)
-    indicator.BackgroundColor3 = toggled and Color3.fromRGB(131, 132, 255) or Color3.fromRGB(70, 70, 70)
-    indicator.Parent = toggleBtn
-
-    toggleBtn.MouseButton1Click:Connect(function()
-        toggled = not toggled
-        indicator.BackgroundColor3 = toggled and Color3.fromRGB(131, 132, 255) or Color3.fromRGB(70, 70, 70)
-        if callback then callback(toggled) end
-    end)
-end
-
--- Helper function for Slider
-local function createSlider(text, min, max, default, step, callback)
-    local sliderFrame = Instance.new("Frame")
-    sliderFrame.Size = UDim2.new(1, 0, 0, 50)
-    sliderFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-    sliderFrame.Parent = contentFrame
-
+function library:CreateLabel(tab, text)
     local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 16)
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.Text = text
     label.BackgroundTransparency = 1
-    label.Text = "  " .. text
-    label.TextColor3 = Color3.new(1, 1, 1)
-    label.Font = Enum.Font.GothamSemibold
-    label.TextSize = 14
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = sliderFrame
+    label.TextColor3 = library.theme.FontColor
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 16
+    label.Parent = tab
+end
 
-    local sliderBackground = Instance.new("Frame")
-    sliderBackground.Size = UDim2.new(1, -20, 0, 8)
-    sliderBackground.Position = UDim2.new(0, 10, 0, 30)
-    sliderBackground.BackgroundColor3 = Color3.fromRGB(55, 55, 55)
-    sliderBackground.Parent = sliderFrame
-
-    local sliderFill = Instance.new("Frame")
-    sliderFill.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
-    sliderFill.BackgroundColor3 = Color3.fromRGB(131, 132, 255)
-    sliderFill.Parent = sliderBackground
-
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Size = UDim2.new(1, 0, 0, 14)
-    valueLabel.Position = UDim2.new(0, 0, 0, 16)
-    valueLabel.BackgroundTransparency = 1
-    valueLabel.Text = tostring(default)
-    valueLabel.TextColor3 = Color3.new(1, 1, 1)
-    valueLabel.Font = Enum.Font.GothamSemibold
-    valueLabel.TextSize = 14
-    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
-    valueLabel.Parent = sliderFrame
-
-    local dragging = false
-
-    local function updateSlider(inputPos)
-        local relativeX = math.clamp(inputPos.X - sliderBackground.AbsolutePosition.X, 0, sliderBackground.AbsoluteSize.X)
-        local percent = relativeX / sliderBackground.AbsoluteSize.X
-        local newValue = min + (max - min) * percent
-        if step and step > 0 then
-            newValue = math.floor(newValue / step + 0.5) * step
-        end
-        sliderFill.Size = UDim2.new(percent, 0, 1, 0)
-        valueLabel.Text = tostring(newValue)
-        if callback then callback(newValue) end
-    end
-
-    sliderBackground.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            updateSlider(input.Position)
-        end
-    end)
-
-    sliderBackground.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
-    end)
-
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-            updateSlider(input.Position)
+function library:CreateKeybind(key)
+    local bind = Enum.KeyCode[key] or Enum.KeyCode.RightShift
+    uis.InputBegan:Connect(function(input, gpe)
+        if not gpe and input.KeyCode == bind then
+            gui.Enabled = not gui.Enabled
         end
     end)
 end
 
--- Helper function for Dropdown
-local function createDropdown(text, options, callback)
-    local dropdownBtn = Instance.new("TextButton")
-    dropdownBtn.Size = UDim2.new(1, 0, 0, 30)
-    dropdownBtn.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-    dropdownBtn.Text = "  " .. text .. ":"
-    dropdownBtn.TextColor3 = Color3.new(1, 1, 1)
-    dropdownBtn.Font = Enum.Font.GothamSemibold
-    dropdownBtn.TextSize = 14
-    dropdownBtn.TextXAlignment = Enum.TextXAlignment.Left
-    dropdownBtn.Parent = contentFrame
-
-    local selectedLabel = Instance.new("TextLabel")
-    selectedLabel.Size = UDim2.new(1, -20, 1, 0)
-    selectedLabel.Position = UDim2.new(0, 0, 0, 0)
-    selectedLabel.BackgroundTransparency = 1
-    selectedLabel.Text = "  " .. options[1]
-    selectedLabel.TextColor3 = Color3.new(1, 1, 1)
-    selectedLabel.Font = Enum.Font.GothamSemibold
-    selectedLabel.TextSize = 14
-    selectedLabel.TextXAlignment = Enum.TextXAlignment.Right
-    selectedLabel.Parent = dropdownBtn
-
-    local dropdownFrame = Instance.new("Frame")
-    dropdownFrame.Size = UDim2.new(1, 0, 0, 0)
-    dropdownFrame.Position = UDim2.new(0, 0, 1, 0)
-    dropdownFrame.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-    dropdownFrame.ClipsDescendants = true
-    dropdownFrame.Parent = dropdownBtn
-
-    local listLayout = Instance.new("UIListLayout")
-    listLayout.Parent = dropdownFrame
-    listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-    local open = false
-
-    dropdownBtn.MouseButton1Click:Connect(function()
-        open = not open
-        local newSize = open and (#options * 30) or 0
-        TweenService:Create(dropdownFrame, TweenInfo.new(0.25), {Size = UDim2.new(1, 0, 0, newSize)}):Play()
-    end)
-
-    for i, option in ipairs(options) do
-        local optionBtn = Instance.new("TextButton")
-        optionBtn.Size = UDim2.new(1, 0, 0, 30)
-        optionBtn.BackgroundColor3 = Color3.fromRGB(43, 43, 43)
-        optionBtn.Text = "  " .. option
-        optionBtn.TextColor3 = Color3.new(1, 1, 1)
-        optionBtn.Font = Enum.Font.GothamSemibold
-        optionBtn.TextSize = 14
-        optionBtn.TextXAlignment = Enum.TextXAlignment.Left
-        optionBtn.Parent = dropdownFrame
-
-        optionBtn.MouseButton1Click:Connect(function()
-            selectedLabel.Text = "  " .. option
-            open = false
-            TweenService:Create(dropdownFrame, TweenInfo.new(0.25), {Size = UDim2.new(1, 0, 0, 0)}):Play()
-            if callback then callback(option) end
-        end)
-    end
+function library:ToggleWindow(state)
+    gui.Enabled = state
 end
+
+-- === Auto Initialization ===
+library:CreateKeybind("RightShift") -- Toggle visibility with RightShift
+
+-- Example Tab Setup
+local homeTab = library:CreateTab("Home")
+library:CreateLabel(homeTab, "Welcome to IreXion UI!")
+library:CreateButton(homeTab, "Print Hello", function()
+    print("Hello from IreXion UI!")
+end)
+
+local settingsTab = library:CreateTab("Settings")
+library:CreateLabel(settingsTab, "Settings Menu")
+library:CreateButton(settingsTab, "Toggle Something", function()
+    print("Toggled a setting.")
+end)

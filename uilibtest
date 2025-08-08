@@ -132,16 +132,3 @@ end
 
 -- === Auto Initialization ===
 library:CreateKeybind("RightShift") -- Toggle visibility with RightShift
-
--- Example Tab Setup
-local homeTab = library:CreateTab("Home")
-library:CreateLabel(homeTab, "Welcome to IreXion UI!")
-library:CreateButton(homeTab, "Print Hello", function()
-    print("Hello from IreXion UI!")
-end)
-
-local settingsTab = library:CreateTab("Settings")
-library:CreateLabel(settingsTab, "Settings Menu")
-library:CreateButton(settingsTab, "Toggle Something", function()
-    print("Toggled a setting.")
-end)
